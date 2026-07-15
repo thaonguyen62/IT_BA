@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tạo &amp; điều chỉnh hóa đơn</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #FBFAF7;
+    --ink: #2B2733;
+    --ink-soft: #5C5566;
+    --purple: #6B5CA5;
+    --purple-soft: #EFEBF8;
+    --tan: #C8A97E;
+    --tan-soft: #F5EEE1;
+    --border: #E4DFD4;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.65;
+    padding: 56px 20px 96px;
+  }
+  .doc { max-width: 920px; margin: 0 auto; }
+
+  header { border-bottom: 2px solid var(--ink); padding-bottom: 28px; margin-bottom: 40px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--purple);
+    margin-bottom: 12px;
+  }
+  h1 { font-size: 33px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 14px; }
+  .intro { color: var(--ink-soft); font-size: 16px; max-width: 70ch; }
+
+  section { margin-bottom: 56px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
+  .sec-num {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--purple);
+    background: var(--purple-soft);
+    border: 1px solid var(--purple);
+    border-radius: 4px;
+    padding: 2px 9px;
+    flex-shrink: 0;
+  }
+  h2 { font-size: 21px; font-weight: 650; letter-spacing: -0.01em; }
+  .sec-desc {
+    color: var(--ink-soft);
+    font-size: 15px;
+    max-width: 72ch;
+    margin-bottom: 18px;
+    border-left: 3px solid var(--tan);
+    background: var(--tan-soft);
+    padding: 10px 16px;
+    border-radius: 0 6px 6px 0;
+  }
+  .diagram {
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 16px;
+    overflow-x: auto;
+  }
+  .diagram .mermaid { display: flex; justify-content: center; min-width: 320px; }
+  .legend {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .legend code {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--purple);
+    background: var(--purple-soft);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <header>
+    <div class="eyebrow">INVOICE LIFECYCLE — HOTEL BOOKING</div>
+    <h1>Tạo &amp; điều chỉnh hóa đơn: bộ sơ đồ chốt</h1>
+  </header>
+
+  <!-- 01 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>Mindmap</h2></div>
+   
+    <div class="diagram"><pre class="mermaid">
+mindmap
+  root((Hóa đơn))
+    TẠO HĐ
+      Trigger
+        In-app: thanh toán xong
+        CRM: CS tạo, có csTicketId
+      Platform Service
+        Lấy trans theo Tid
+        Validate
+        Tracking = Init
+      ERP
+        Timeout: Error
+        202: Pending
+        Callback: Success
+      AF
+        Email HĐ cho user
+    ĐIỀU CHỈNH / HUỶ
+      Tính hoàn
+        Hotel tính tiền hoàn
+        Partner trả tiền charge
+      Điều kiện
+        Huỷ 1 phần: Partial
+        Không huỷ được: ẩn nút
+        Huỷ toàn bộ: Full
+      Kết quả Success
+        Full: HĐ ĐC = 0 + HĐ gốc
+        Partial: HĐ ĐC + HĐ gốc
+        ERP xuất HĐ thay thế
+        AF gửi mail HĐ ĐC
+        Push noti user
+      Rẽ theo tracking
+        Not found: no-op
+        Init: cancel request
+        Pending: CancelERPRecordTask
+        Error/Cancel: no-op
+    </pre></div>
+  </section>
+
+  <!-- 02 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>Use case</h2></div>
+    <div class="diagram"><pre class="mermaid">
+flowchart LR
+    CS([CS Agent])
+    User([User])
+    AF([AF Service])
+    ERP([ERP Service])
+
+    subgraph SYS["Hệ thống Hóa đơn"]
+        UC1[CS tạo request HĐ trên CRM]
+        UC2[Thanh toán &amp; xuất HĐ trong app]
+        UC3[Xem trạng thái HĐ trong Pocket]
+        UC4[Huỷ booking &amp; điều chỉnh HĐ]
+        UC5[Nhận thông báo kết quả]
+        UC6[Xuất HĐ / HĐ thay thế]
+        UC7[Gửi email hóa đơn]
+    end
+
+    CS --> UC1
+    User --> UC2
+    User --> UC3
+    User --> UC4
+    User --> UC5
+    UC1 -.include.-> UC6
+    UC2 -.include.-> UC6
+    UC4 -.include.-> UC6
+    UC6 -.include.-> UC7
+    UC7 --- AF
+    UC6 --- ERP
+    </pre></div>
+  </section>
+
+  <!-- 03 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>Sequence — tạo hóa đơn</h2></div>
+   
+    <div class="diagram"><pre class="mermaid">
+sequenceDiagram
+    actor User
+    participant CRM
+    participant Platform Service
+    participant ERP
+    participant AF Service
+
+    alt In-app payment
+        User->>Platform Service: Thanh toán thành công (lưu Pocket)
+    else CS tạo trên CRM
+        CRM->>Platform Service: Request tạo HĐ (csTicketId)
+    end
+    Platform Service->>Platform Service: Validate request, lấy trans theo Tid
+    Platform Service->>Platform Service: Tạo trackingInvoiceStatus = Init
+    Platform Service->>ERP: Gửi request xuất HĐ
+    alt Error / Timeout
+        ERP-->>Platform Service: Error / Timeout
+        Platform Service->>Platform Service: update status = Error/Cancel
+        Platform Service-->>User: update status (fail)
+    else 202 Accepted
+        ERP-->>Platform Service: 202
+        Platform Service->>Platform Service: update status = Pending
+        ERP->>AF Service: Request gửi mail HĐ
+        AF Service-->>User: Email hóa đơn
+        ERP-->>Platform Service: Callback success
+        Platform Service->>Platform Service: update status = Success, lưu DB
+        Platform Service-->>User: update status
+    end
+    </pre></div>
+    <p class="legend">Legend trạng thái: <code>Init</code> · <code>Pending</code> · <code>Success</code> · <code>Error/Cancel</code></p>
+  </section>
+
+  <!-- 04 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>Sequence — điều chỉnh / huỷ</h2></div>
+    
+    <div class="diagram"><pre class="mermaid">
+sequenceDiagram
+    actor User
+    participant Platform Service
+    participant Hotel Service
+    participant Partner
+    participant ERP
+    participant AF Service
+
+    User->>Platform Service: Huỷ booking (1 phòng / toàn bộ) trong Pocket
+    Platform Service->>Hotel Service: Call huỷ
+    Hotel Service->>Partner: Request huỷ
+    Partner-->>Hotel Service: Số tiền bị charge
+    Hotel Service->>Hotel Service: Tính tiền hoàn
+    Hotel Service->>Platform Service: Lưu thông tin huỷ
+    Platform Service->>Platform Service: Query trackingInvoice theo Tid
+
+    alt Không tồn tại / Error-Cancel
+        Platform Service->>Platform Service: Không làm gì thêm
+    else Init
+        Platform Service->>Platform Service: Cancel request
+    else Pending
+        Platform Service->>ERP: CancelERPRecordTask
+        ERP-->>Platform Service: status = CANCEL
+        Platform Service->>Platform Service: Chặn xuất hóa đơn
+    else Success
+        alt Partial — huỷ 1 phần
+            Platform Service->>Platform Service: Build HĐ điều chỉnh phần huỷ + giữ HĐ gốc
+        else Full — huỷ toàn bộ
+            Platform Service->>Platform Service: Build HĐ điều chỉnh = 0 + kèm HĐ gốc
+        end
+        Platform Service->>ERP: Gửi HĐ điều chỉnh
+        ERP->>ERP: Xuất HĐ thay thế
+        ERP->>AF Service: Request gửi mail HĐ điều chỉnh
+        AF Service-->>User: Email HĐ điều chỉnh
+        ERP-->>Platform Service: Response kết quả
+    end
+    Platform Service-->>User: Push notification
+    </pre></div>
+  </section>
+
+  <!-- 05 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>Activity — tạo hóa đơn</h2></div>
+    
+    <div class="diagram"><pre class="mermaid">
+flowchart TD
+    A1([User thanh toán trong app]) --> B1[Hotel Service lưu Pocket]
+    A2([CS tạo request trên CRM]) --> B2[CRM generate csTicketId]
+    B1 --> C[Platform Service nhận request]
+    B2 --> C
+    C --> D[Validate request]
+    D --> E[Lấy transaction theo Tid]
+    E --> F[Tạo trackingInvoiceStatus = Init]
+    F --> G[Gửi request xuất HĐ đến ERP]
+    G --> H{ERP phản hồi?}
+    H -->|Error/Timeout| I[Update status = Error/Cancel]
+    I --> Z1([Kết thúc])
+    H -->|202 Accepted| J[Update status = Pending]
+    J --> K[ERP gửi request đến AF Service]
+    K --> L[AF Service gửi mail HĐ cho user]
+    L --> M[ERP callback về Platform Service]
+    M --> N[Update status = Success, lưu DB]
+    N --> O[Update status trên CRM]
+    O --> Z2([Kết thúc])
+    </pre></div>
+  </section>
+
+  <!-- 06 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><h2>Activity — huỷ</h2></div>
+   
+    <div class="diagram"><pre class="mermaid">
+flowchart TD
+    A([User huỷ booking trong Pocket]) --> B[Platform Service call Hotel Service]
+    B --> C[Hotel Service gọi Partner]
+    C --> D[Partner trả số tiền charge]
+    D --> E[Hotel Service tính tiền hoàn]
+    E --> F[Hotel Service lưu info huỷ → Platform]
+    F --> G{Query trackingInvoice theo Tid}
+    G -->|Không tồn tại / Error/Cancel| Z1([Kết thúc: không làm gì])
+    G -->|Init| CR[Cancel request] --> Z2([Kết thúc])
+    G -->|Pending| P1[CancelERPRecordTask] --> P2[ERP update = CANCEL] --> P3[Chặn xuất hóa đơn] --> P4[Push noti: đã huỷ, không xuất HĐ] --> Z2
+    G -->|Success| S{Loại huỷ}
+    S -->|Partial 1 phần| S1[Build HĐ điều chỉnh phần huỷ + giữ HĐ gốc]
+    S -->|Full toàn bộ| S2[Build HĐ điều chỉnh = 0 + kèm HĐ gốc]
+    S1 --> T[Gửi HĐ điều chỉnh đến ERP]
+    S2 --> T
+    T --> U[ERP xuất HĐ thay thế]
+    U --> V[ERP gọi AF Service]
+    V --> W[AF gửi mail HĐ điều chỉnh cho user]
+    W --> X[ERP response kết quả về Platform]
+    X --> Y[Push notification cho user]
+    </pre></div>
+    <p class="legend">Legend trạng thái: <code>Init</code> · <code>Pending</code> · <code>Success</code> · <code>Error/Cancel</code></p>
+  </section>
+
+  <!-- 07 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">07</span><h2>BPMN (dạng lane)</h2></div>
+   
+    <div class="diagram"><pre class="mermaid">
+flowchart TD
+    subgraph L1["Lane: User / CRM"]
+        Start(("Start: thanh toán / tạo request"))
+    end
+    subgraph L2["Lane: Platform Service"]
+        V["Validate + lấy trans theo Tid"] --> Tr["Tạo tracking = Init"]
+    end
+    subgraph L3["Lane: ERP Service"]
+        X["Xử lý xuất HĐ"] --> R{"ERP response?"}
+        R -->|"Error/Timeout"| E1["Update = Error/Cancel"]
+        R -->|"202"| E2["Update = Pending"]
+    end
+    subgraph L4["Lane: AF Service"]
+        M["Gửi mail HĐ"] --> CB["Callback success"]
+    end
+    subgraph L5["Lane: Platform Service (kết thúc)"]
+        FIN["Update = Success + lưu DB + update CRM"]
+    end
+
+    Start --> V
+    Tr --> X
+    X -->|"sau 202: trigger mail"| M
+    X -->|"response"| R
+    CB -->|"callback"| FIN
+    E1 --> End1(("End"))
+    FIN --> End2(("End"))
+    E2 -.-> End1
+    </pre></div>
+  </section>
+
+  
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    fontFamily: 'ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif',
+    themeVariables: {
+      primaryColor: '#EFEBF8',
+      primaryBorderColor: '#6B5CA5',
+      primaryTextColor: '#2B2733',
+      secondaryColor: '#F5EEE1',
+      secondaryBorderColor: '#C8A97E',
+      tertiaryColor: '#FBFAF7',
+      lineColor: '#5C5566',
+      actorBorder: '#6B5CA5',
+      actorBkg: '#EFEBF8',
+      signalColor: '#2B2733',
+      noteBkgColor: '#F5EEE1',
+      noteBorderColor: '#C8A97E',
+      clusterBkg: '#FBFAF7',
+      clusterBorder: '#E4DFD4',
+      edgeLabelBackground: '#FBFAF7'
+    },
+    flowchart: { htmlLabels: true },
+    sequence: { actorMargin: 40, mirrorActors: false }
+  });
+</script>
+</body>
+</html>
