@@ -1,0 +1,508 @@
+<title>Invoice Flow — Diagram Set</title>
+<style>
+  :root {
+    --bg: #FAFAF7;
+    --surface: #FFFFFF;
+    --ink: #1B1D1F;
+    --muted: #5C6169;
+    --line: #E1DED4;
+    --accent: #0F6B5C;
+    --accent-soft: #E3EFEB;
+    --accent-ink: #08332C;
+    --code-bg: #F1EFE6;
+    --status-init: #7A6A2E;
+    --status-pending: #8A5A16;
+    --status-success: #0F6B5C;
+    --status-error: #9C3B2E;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15171A;
+      --surface: #1C1F23;
+      --ink: #EDEBE3;
+      --muted: #9BA0A8;
+      --line: #34383E;
+      --accent: #4FBFA6;
+      --accent-soft: #1E2E2A;
+      --accent-ink: #B9EDDD;
+      --code-bg: #22252A;
+      --status-init: #D8C77A;
+      --status-pending: #E3A85B;
+      --status-success: #4FBFA6;
+      --status-error: #E58A79;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171A; --surface: #1C1F23; --ink: #EDEBE3; --muted: #9BA0A8;
+    --line: #34383E; --accent: #4FBFA6; --accent-soft: #1E2E2A; --accent-ink: #B9EDDD;
+    --code-bg: #22252A; --status-init: #D8C77A; --status-pending: #E3A85B;
+    --status-success: #4FBFA6; --status-error: #E58A79;
+  }
+  :root[data-theme="light"] {
+    --bg: #FAFAF7; --surface: #FFFFFF; --ink: #1B1D1F; --muted: #5C6169;
+    --line: #E1DED4; --accent: #0F6B5C; --accent-soft: #E3EFEB; --accent-ink: #08332C;
+    --code-bg: #F1EFE6; --status-init: #7A6A2E; --status-pending: #8A5A16;
+    --status-success: #0F6B5C; --status-error: #9C3B2E;
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: light dark; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Charter, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  .mono {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, monospace;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 0;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  nav.toc {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    padding: 3rem 1.25rem 2rem 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav.toc .kicker {
+    display: block;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.9rem;
+  }
+  nav.toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  nav.toc a {
+    display: flex;
+    gap: 0.55rem;
+    align-items: baseline;
+    padding: 0.4rem 0.5rem;
+    border-radius: 4px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 0.86rem;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible { background: var(--accent-soft); color: var(--ink); }
+  nav.toc a .n {
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    flex: none;
+  }
+
+  main { padding: 3rem 2.5rem 6rem 2rem; min-width: 0; }
+
+  header.title {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 2rem;
+    margin-bottom: 2.75rem;
+  }
+  header.title .kicker {
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.8rem;
+  }
+  header.title h1 {
+    font-size: 2.15rem;
+    margin: 0 0 0.6rem;
+    text-wrap: balance;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  header.title p {
+    margin: 0;
+    color: var(--muted);
+    max-width: 62ch;
+    font-size: 1.02rem;
+  }
+
+  section.sheet {
+    margin-bottom: 4rem;
+    scroll-margin-top: 1.5rem;
+  }
+  section.sheet .sheet-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+  }
+  section.sheet .idx {
+    font-family: ui-monospace, "SF Mono", monospace;
+    color: var(--accent);
+    font-size: 0.85rem;
+  }
+  section.sheet h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+  }
+  section.sheet .desc {
+    color: var(--muted);
+    max-width: 68ch;
+    margin: 0.4rem 0 1.25rem;
+    font-size: 0.98rem;
+  }
+
+  .diagram-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1.5rem;
+    overflow-x: auto;
+  }
+  .diagram-card .mermaid { display: flex; justify-content: center; }
+  .diagram-card svg { max-width: 100%; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.1rem;
+    margin-top: 0.9rem;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 0.76rem;
+    color: var(--muted);
+  }
+  .legend .dot {
+    display: inline-block;
+    width: 0.55em;
+    height: 0.55em;
+    border-radius: 50%;
+    margin-right: 0.4em;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; }
+    nav.toc { position: static; height: auto; padding: 1.5rem 0 0; }
+    main { padding: 1.5rem 1.25rem 4rem; }
+  }
+</style>
+
+<div class="shell">
+  <nav class="toc">
+    <span class="kicker">Diagram set</span>
+    <ol>
+      <li><a href="#mindmap"><span class="n">01</span> Mindmap</a></li>
+      <li><a href="#usecase"><span class="n">02</span> Use case</a></li>
+      <li><a href="#seq-create"><span class="n">03</span> Sequence — tạo HĐ</a></li>
+      <li><a href="#seq-adjust"><span class="n">04</span> Sequence — điều chỉnh</a></li>
+      <li><a href="#activity-create"><span class="n">05</span> Activity — tạo HĐ</a></li>
+      <li><a href="#activity"><span class="n">06</span> Activity — huỷ</a></li>
+      <li><a href="#bpmn"><span class="n">07</span> BPMN (lane)</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="title">
+      <span class="kicker">Invoice lifecycle — hotel booking</span>
+      <h1>Tạo &amp; điều chỉnh hóa đơn: bộ sơ đồ chốt</h1>
+      <p>Bảy góc nhìn của cùng một luồng nghiệp vụ — từ tổng quan (mindmap, use case) đến chi tiết thực thi (sequence, activity, BPMN lane) — dựa trên bản mô tả đã thống nhất giữa Platform, Hotel, ERP, AF Service.</p>
+    </header>
+
+    <section class="sheet" id="mindmap">
+      <div class="sheet-head"><span class="idx">01</span><h2>Mindmap</h2></div>
+      <p class="desc">Toàn cảnh hai nhánh nghiệp vụ chính — tạo hóa đơn và điều chỉnh/huỷ — cùng các nhánh con theo service sở hữu.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+mindmap
+  root((Hóa đơn))
+    (TẠO HĐ)
+      Trigger
+        In-app: thanh toán xong
+        CRM: CS tạo, có csTicketId
+      Platform Service
+        Validate
+        Lấy trans theo Tid
+        Tracking = Init
+      ERP
+        Timeout: Error
+        202: Pending
+        Callback: Success
+      AF
+        Email HĐ cho user
+    (ĐIỀU CHỈNH / HUỶ)
+      Điều kiện
+        Không huỷ được: ẩn nút
+        Huỷ 1 phần: Partial
+        Huỷ toàn bộ: Full
+      Tính hoàn
+        Partner trả tiền charge
+        Hotel tính tiền hoàn
+      Rẽ theo tracking
+        Not found: no-op
+        Error/Cancel: no-op
+        Init: cancel request
+        Pending: CancelERPRecordTask
+        Success: build HĐ điều chỉnh
+      Kết quả Success
+        Partial: HĐ ĐC + HĐ gốc
+        Full: HĐ ĐC = 0 + HĐ gốc
+        ERP xuất HĐ thay thế
+        AF gửi mail HĐ ĐC
+        Push noti user
+        </pre>
+      </div>
+    </section>
+
+    <section class="sheet" id="usecase">
+      <div class="sheet-head"><span class="idx">02</span><h2>Use case</h2></div>
+      <p class="desc">Actor chính (User, CS Agent) khởi tạo nghiệp vụ; actor phụ (ERP, AF Service) tham gia thực thi. Quan hệ nét liền = association, nét đứt <span class="mono">«include»</span> = bước bắt buộc kéo theo.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+flowchart LR
+  User(("👤 User"))
+  CS(("🎧 CS Agent"))
+  subgraph SYS["Hệ thống Hóa đơn"]
+    direction TB
+    UC1(["Thanh toán &amp; xuất HĐ trong app"])
+    UC2(["CS tạo request HĐ trên CRM"])
+    UC3(["Xem trạng thái HĐ trong Pocket"])
+    UC4(["Huỷ booking &amp; điều chỉnh HĐ"])
+    UC5(["Xuất HĐ / HĐ thay thế"])
+    UC6(["Gửi email hóa đơn"])
+    UC7(["Nhận thông báo kết quả"])
+  end
+  ERP(("⚙️ ERP Service"))
+  AF(("✉️ AF Service"))
+
+  User --- UC1
+  User --- UC3
+  User --- UC4
+  User --- UC7
+  CS --- UC2
+
+  UC1 -. include .-> UC5
+  UC2 -. include .-> UC5
+  UC4 -. include .-> UC5
+  UC5 -. include .-> UC6
+
+  UC5 --- ERP
+  UC6 --- AF
+        </pre>
+      </div>
+    </section>
+
+    <section class="sheet" id="seq-create">
+      <div class="sheet-head"><span class="idx">03</span><h2>Sequence — tạo hóa đơn</h2></div>
+      <p class="desc">Hai nguồn trigger hội tụ về Platform Service; nhánh ERP rẽ theo error/timeout hoặc 202 + callback bất đồng bộ.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+sequenceDiagram
+  actor U as User
+  participant CRM
+  participant PF as Platform Service
+  participant ERP
+  participant AF as AF Service
+
+  alt In-app payment
+    U->>PF: Thanh toán thành công (lưu Pocket)
+  else CS tạo trên CRM
+    CRM->>PF: Request tạo HĐ (csTicketId)
+  end
+  PF->>PF: Validate request, lấy trans theo Tid
+  PF->>PF: Tạo trackingInvoiceStatus = Init
+  PF->>ERP: Gửi request xuất HĐ
+
+  alt Error / Timeout
+    ERP-->>PF: Error / Timeout
+    PF->>PF: update status = Error/Cancel
+    PF->>CRM: update status (fail)
+  else 202 Accepted
+    ERP-->>PF: 202
+    PF->>PF: update status = Pending
+    ERP->>AF: Request gửi mail HĐ
+    AF-->>U: Email hóa đơn
+    ERP-->>PF: Callback success
+    PF->>PF: update status = Success, lưu DB
+    PF->>CRM: update status
+  end
+        </pre>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--status-init)"></span>Init</span>
+        <span><span class="dot" style="background:var(--status-pending)"></span>Pending</span>
+        <span><span class="dot" style="background:var(--status-success)"></span>Success</span>
+        <span><span class="dot" style="background:var(--status-error)"></span>Error/Cancel</span>
+      </div>
+    </section>
+
+    <section class="sheet" id="seq-adjust">
+      <div class="sheet-head"><span class="idx">04</span><h2>Sequence — điều chỉnh / huỷ</h2></div>
+      <p class="desc">Hotel Service và Partner tính tiền hoàn trước; Platform Service rẽ nhánh theo trạng thái tracking hiện tại của HĐ gốc.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+sequenceDiagram
+  actor U as User
+  participant PF as Platform Service
+  participant HTL as Hotel Service
+  participant PT as Partner
+  participant ERP
+  participant AF as AF Service
+
+  U->>PF: Huỷ booking (1 phòng / toàn bộ) trong Pocket
+  PF->>HTL: Call huỷ
+  HTL->>PT: Request huỷ
+  PT-->>HTL: Số tiền bị charge
+  HTL->>HTL: Tính tiền hoàn
+  HTL->>PF: Lưu thông tin huỷ
+  PF->>PF: Query trackingInvoice theo Tid
+
+  alt Không tồn tại / Error-Cancel
+    PF->>PF: Không làm gì thêm
+  else Init
+    PF->>PF: Cancel request
+  else Pending
+    PF->>ERP: CancelERPRecordTask
+    ERP-->>PF: status = CANCEL
+    PF->>PF: Chặn xuất hóa đơn
+  else Success
+    alt Partial — huỷ 1 phần
+      PF->>PF: Build HĐ điều chỉnh phần huỷ + giữ HĐ gốc
+    else Full — huỷ toàn bộ
+      PF->>PF: Build HĐ điều chỉnh = 0 + kèm HĐ gốc
+    end
+    PF->>ERP: Gửi HĐ điều chỉnh
+    ERP->>ERP: Xuất HĐ thay thế
+    ERP->>AF: Request gửi mail HĐ điều chỉnh
+    AF-->>U: Email HĐ điều chỉnh
+    ERP-->>PF: Response kết quả
+    PF-->>U: Push notification
+  end
+        </pre>
+      </div>
+    </section>
+
+    <section class="sheet" id="activity-create">
+      <div class="sheet-head"><span class="idx">05</span><h2>Activity — tạo hóa đơn</h2></div>
+      <p class="desc">Hai điểm khởi tạo (in-app / CS-CRM) hội tụ về Platform Service, rẽ nhánh theo phản hồi ERP.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+flowchart TD
+  A1(["User thanh toán trong app"]) --> C1["Hotel Service lưu Pocket"]
+  A2(["CS tạo request trên CRM"]) --> C2["CRM generate csTicketId"]
+  C1 --> D["Platform Service nhận request"]
+  C2 --> D
+  D --> E["Validate request"]
+  E --> F["Lấy transaction theo Tid"]
+  F --> G["Tạo trackingInvoiceStatus = Init"]
+  G --> H["Gửi request xuất HĐ đến ERP"]
+  H --> I{"ERP phản hồi?"}
+  I -- "Error / Timeout" --> J["Update status = Error/Cancel"] --> Z1(["Kết thúc"])
+  I -- "202 Accepted" --> K["Update status = Pending"]
+  K --> L["ERP gửi request đến AF Service"]
+  L --> M["AF Service gửi mail HĐ cho user"]
+  M --> N["ERP callback về Platform Service"]
+  N --> O["Update status = Success, lưu DB"]
+  O --> P["Update status trên CRM"]
+  P --> Z2(["Kết thúc"])
+        </pre>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--status-init)"></span>Init</span>
+        <span><span class="dot" style="background:var(--status-pending)"></span>Pending</span>
+        <span><span class="dot" style="background:var(--status-success)"></span>Success</span>
+        <span><span class="dot" style="background:var(--status-error)"></span>Error/Cancel</span>
+      </div>
+    </section>
+
+    <section class="sheet" id="activity">
+      <div class="sheet-head"><span class="idx">06</span><h2>Activity — huỷ</h2></div>
+      <p class="desc">Toàn bộ nhánh quyết định của luồng huỷ, từ tính tiền hoàn đến từng kết cục theo trạng thái tracking.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+flowchart TD
+  A(["User huỷ booking trong Pocket"]) --> A2["Platform Service call Hotel Service"]
+  A2 --> B["Hotel Service gọi Partner"]
+  B --> C["Partner trả số tiền charge"]
+  C --> D["Hotel Service tính tiền hoàn"]
+  D --> E["Hotel Service lưu info huỷ → Platform"]
+  E --> F{"Query trackingInvoice theo Tid"}
+  F -- "Không tồn tại" --> Z1(["Kết thúc: không làm gì"])
+  F -- "Error/Cancel" --> Z1
+  F -- "Init" --> G["Cancel request"] --> Z2(["Kết thúc"])
+  F -- "Pending" --> H["CancelERPRecordTask"] --> I["ERP update = CANCEL"] --> J["Chặn xuất hóa đơn"]
+  J --> Jn["Push noti: đã huỷ, không xuất HĐ"] --> Z2
+  F -- "Success" --> K{"Loại huỷ"}
+  K -- "Partial (1 phần)" --> L["Build HĐ điều chỉnh phần huỷ + giữ HĐ gốc"]
+  K -- "Full (toàn bộ)" --> M["Build HĐ điều chỉnh = 0 + kèm HĐ gốc"]
+  L --> N["Gửi HĐ điều chỉnh đến ERP"]
+  M --> N
+  N --> O["ERP xuất HĐ thay thế"]
+  O --> Oaf["ERP gọi AF Service"]
+  Oaf --> Omail["AF gửi mail HĐ điều chỉnh cho user"]
+  Omail --> P["ERP response kết quả về Platform"]
+  P --> Q(["Push notification cho user"])
+        </pre>
+      </div>
+    </section>
+
+    <section class="sheet" id="bpmn">
+      <div class="sheet-head"><span class="idx">07</span><h2>BPMN (dạng lane)</h2></div>
+      <p class="desc">Luồng tạo hóa đơn theo pool/lane từng service — thể hiện điểm bàn giao trách nhiệm và event bất đồng bộ (202 → callback).</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+flowchart TB
+  subgraph LaneUser["Lane: User / CRM"]
+    S1(("Start: thanh toán / tạo request"))
+  end
+  subgraph LanePF["Lane: Platform Service"]
+    P1["Validate + lấy trans theo Tid"]
+    P2["Tạo tracking = Init"]
+    P3{"ERP response?"}
+    P4["Update = Error/Cancel"]
+    P5["Update = Pending"]
+    P6["Update = Success + lưu DB + update CRM"]
+  end
+  subgraph LaneERP["Lane: ERP Service"]
+    E1["Xử lý xuất HĐ"]
+    E2["Callback success"]
+  end
+  subgraph LaneAF["Lane: AF Service"]
+    A1["Gửi mail HĐ"]
+  end
+
+  S1 --> P1 --> P2 --> E1
+  E1 -- "response" --> P3
+  P3 -- "Error/Timeout" --> P4 --> END1(("End"))
+  P3 -- "202" --> P5
+  E1 -. "sau 202: trigger mail" .-> A1
+  A1 --> E2
+  E2 -- "callback" --> P6 --> END2(("End"))
+        </pre>
+      </div>
+    </section>
+
+    <footer>Bộ sơ đồ dựng từ bản mô tả nghiệp vụ đã chốt — Platform / Hotel / ERP / AF Service, trạng thái tracking Init → Pending → Success/Error.</footer>
+  </main>
+</div>

@@ -1,0 +1,433 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2685.4">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="vi"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1">&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1">&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
+<p class="p1">&lt;title&gt;Tạo &amp;amp; điều chỉnh hóa đơn: bộ sơ đồ chốt&lt;/title&gt;</p>
+<p class="p1">&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"&gt;&lt;/script&gt;</p>
+<p class="p1">&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>:root {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--bg: #FBFAF7;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--ink: #2B2733;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--ink-soft: #5C5566;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--purple: #6B5CA5;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--purple-soft: #EFEBF8;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--tan: #C8A97E;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--tan-soft: #F5EEE1;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--border: #E4DFD4;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>--mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>* { box-sizing: border-box; margin: 0; padding: 0; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>body {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background: var(--bg);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color: var(--ink);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>line-height: 1.65;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>padding: 56px 20px 96px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.doc { max-width: 920px; margin: 0 auto; }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>header { border-bottom: 2px solid var(--ink); padding-bottom: 28px; margin-bottom: 40px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.eyebrow {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-family: var(--mono);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>letter-spacing: 0.14em;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>text-transform: uppercase;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color: var(--purple);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>margin-bottom: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>h1 { font-size: 33px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 14px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.intro { color: var(--ink-soft); font-size: 16px; max-width: 70ch; }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>section { margin-bottom: 56px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.sec-num {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-family: var(--mono);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size: 13px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-weight: 600;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color: var(--purple);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background: var(--purple-soft);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border: 1px solid var(--purple);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius: 4px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>padding: 2px 9px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>flex-shrink: 0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>h2 { font-size: 21px; font-weight: 650; letter-spacing: -0.01em; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.sec-desc {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color: var(--ink-soft);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size: 15px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>max-width: 72ch;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>margin-bottom: 18px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-left: 3px solid var(--tan);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background: var(--tan-soft);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>padding: 10px 16px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius: 0 6px 6px 0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.diagram {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background: #FFFFFF;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border: 1px solid var(--border);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius: 10px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>padding: 24px 16px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>overflow-x: auto;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.diagram .mermaid { display: flex; justify-content: center; min-width: 320px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.legend {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>margin-top: 10px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size: 14px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color: var(--ink-soft);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.legend code {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-family: var(--mono);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color: var(--purple);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background: var(--purple-soft);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border: 1px solid var(--border);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius: 4px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>padding: 1px 6px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>footer {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>margin-top: 64px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>padding-top: 20px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-top: 1px solid var(--border);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-family: var(--mono);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color: var(--ink-soft);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1">&lt;div class="doc"&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;header&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="eyebrow"&gt;INVOICE LIFECYCLE — HOTEL BOOKING&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;h1&gt;Tạo &amp;amp; điều chỉnh hóa đơn: bộ sơ đồ chốt&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="intro"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Bảy góc nhìn của cùng một luồng nghiệp vụ — từ tổng quan (mindmap, use case) đến chi tiết</p>
+<p class="p1"><span class="Apple-converted-space">      </span>thực thi (sequence, activity, BPMN lane) — dựa trên bản mô tả đã thống nhất giữa Platform,</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Hotel, ERP, AF Service.</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/header&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 01 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;section&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="sec-head"&gt;&lt;span class="sec-num"&gt;01&lt;/span&gt;&lt;h2&gt;Mindmap&lt;/h2&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="sec-desc"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Toàn cảnh hai nhánh nghiệp vụ chính — tạo hóa đơn và điều chỉnh/huỷ — cùng các nhánh con</p>
+<p class="p1"><span class="Apple-converted-space">      </span>theo service sở hữu.</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="diagram"&gt;&lt;pre class="mermaid"&gt;</p>
+<p class="p1">mindmap</p>
+<p class="p1"><span class="Apple-converted-space">  </span>root((Hóa đơn))</p>
+<p class="p1"><span class="Apple-converted-space">    </span>TẠO HĐ</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Trigger</p>
+<p class="p1"><span class="Apple-converted-space">        </span>In-app: thanh toán xong</p>
+<p class="p1"><span class="Apple-converted-space">        </span>CRM: CS tạo, có csTicketId</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Platform Service</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Lấy trans theo Tid</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Validate</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Tracking = Init</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ERP</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Timeout: Error</p>
+<p class="p1"><span class="Apple-converted-space">        </span>202: Pending</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Callback: Success</p>
+<p class="p1"><span class="Apple-converted-space">      </span>AF</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Email HĐ cho user</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ĐIỀU CHỈNH / HUỶ</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Tính hoàn</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Hotel tính tiền hoàn</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Partner trả tiền charge</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Điều kiện</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Huỷ 1 phần: Partial</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Không huỷ được: ẩn nút</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Huỷ toàn bộ: Full</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Kết quả Success</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Full: HĐ ĐC = 0 + HĐ gốc</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Partial: HĐ ĐC + HĐ gốc</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ERP xuất HĐ thay thế</p>
+<p class="p1"><span class="Apple-converted-space">        </span>AF gửi mail HĐ ĐC</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Push noti user</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Rẽ theo tracking</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Not found: no-op</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Init: cancel request</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Pending: CancelERPRecordTask</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Error/Cancel: no-op</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/pre&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 02 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;section&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="sec-head"&gt;&lt;span class="sec-num"&gt;02&lt;/span&gt;&lt;h2&gt;Use case&lt;/h2&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="sec-desc"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Actor chính (User, CS Agent) khởi tạo nghiệp vụ; actor phụ (ERP, AF Service) tham gia</p>
+<p class="p1"><span class="Apple-converted-space">      </span>thực thi. Quan hệ nét liền = association, nét đứt «include» = bước bắt buộc kéo theo.</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="diagram"&gt;&lt;pre class="mermaid"&gt;</p>
+<p class="p1">flowchart LR</p>
+<p class="p1"><span class="Apple-converted-space">    </span>CS([CS Agent])</p>
+<p class="p1"><span class="Apple-converted-space">    </span>User([User])</p>
+<p class="p1"><span class="Apple-converted-space">    </span>AF([AF Service])</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ERP([ERP Service])</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>subgraph SYS["Hệ thống Hóa đơn"]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>UC1[CS tạo request HĐ trên CRM]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>UC2[Thanh toán &amp;amp; xuất HĐ trong app]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>UC3[Xem trạng thái HĐ trong Pocket]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>UC4[Huỷ booking &amp;amp; điều chỉnh HĐ]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>UC5[Nhận thông báo kết quả]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>UC6[Xuất HĐ / HĐ thay thế]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>UC7[Gửi email hóa đơn]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>CS --&gt; UC1</p>
+<p class="p1"><span class="Apple-converted-space">    </span>User --&gt; UC2</p>
+<p class="p1"><span class="Apple-converted-space">    </span>User --&gt; UC3</p>
+<p class="p1"><span class="Apple-converted-space">    </span>User --&gt; UC4</p>
+<p class="p1"><span class="Apple-converted-space">    </span>User --&gt; UC5</p>
+<p class="p1"><span class="Apple-converted-space">    </span>UC1 -.include.-&gt; UC6</p>
+<p class="p1"><span class="Apple-converted-space">    </span>UC2 -.include.-&gt; UC6</p>
+<p class="p1"><span class="Apple-converted-space">    </span>UC4 -.include.-&gt; UC6</p>
+<p class="p1"><span class="Apple-converted-space">    </span>UC6 -.include.-&gt; UC7</p>
+<p class="p1"><span class="Apple-converted-space">    </span>UC7 --- AF</p>
+<p class="p1"><span class="Apple-converted-space">    </span>UC6 --- ERP</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/pre&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 03 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;section&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="sec-head"&gt;&lt;span class="sec-num"&gt;03&lt;/span&gt;&lt;h2&gt;Sequence — tạo hóa đơn&lt;/h2&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="sec-desc"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Hai nguồn trigger hội tụ về Platform Service; nhánh ERP rẽ theo error/timeout hoặc</p>
+<p class="p1"><span class="Apple-converted-space">      </span>202 + callback bất đồng bộ.</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="diagram"&gt;&lt;pre class="mermaid"&gt;</p>
+<p class="p1">sequenceDiagram</p>
+<p class="p1"><span class="Apple-converted-space">    </span>actor User</p>
+<p class="p1"><span class="Apple-converted-space">    </span>participant CRM</p>
+<p class="p1"><span class="Apple-converted-space">    </span>participant Platform Service</p>
+<p class="p1"><span class="Apple-converted-space">    </span>participant ERP</p>
+<p class="p1"><span class="Apple-converted-space">    </span>participant AF Service</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>alt In-app payment</p>
+<p class="p1"><span class="Apple-converted-space">        </span>User-&gt;&gt;Platform Service: Thanh toán thành công (lưu Pocket)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else CS tạo trên CRM</p>
+<p class="p1"><span class="Apple-converted-space">        </span>CRM-&gt;&gt;Platform Service: Request tạo HĐ (csTicketId)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Platform Service-&gt;&gt;Platform Service: Validate request, lấy trans theo Tid</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Platform Service-&gt;&gt;Platform Service: Tạo trackingInvoiceStatus = Init</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Platform Service-&gt;&gt;ERP: Gửi request xuất HĐ</p>
+<p class="p1"><span class="Apple-converted-space">    </span>alt Error / Timeout</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ERP--&gt;&gt;Platform Service: Error / Timeout</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Platform Service-&gt;&gt;Platform Service: update status = Error/Cancel</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Platform Service--&gt;&gt;User: update status (fail)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else 202 Accepted</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ERP--&gt;&gt;Platform Service: 202</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Platform Service-&gt;&gt;Platform Service: update status = Pending</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ERP-&gt;&gt;AF Service: Request gửi mail HĐ</p>
+<p class="p1"><span class="Apple-converted-space">        </span>AF Service--&gt;&gt;User: Email hóa đơn</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ERP--&gt;&gt;Platform Service: Callback success</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Platform Service-&gt;&gt;Platform Service: update status = Success, lưu DB</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Platform Service--&gt;&gt;User: update status</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/pre&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="legend"&gt;Legend trạng thái: &lt;code&gt;Init&lt;/code&gt; · &lt;code&gt;Pending&lt;/code&gt; · &lt;code&gt;Success&lt;/code&gt; · &lt;code&gt;Error/Cancel&lt;/code&gt;&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 04 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;section&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="sec-head"&gt;&lt;span class="sec-num"&gt;04&lt;/span&gt;&lt;h2&gt;Sequence — điều chỉnh / huỷ&lt;/h2&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="sec-desc"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Hotel Service và Partner tính tiền hoàn trước; Platform Service rẽ nhánh theo trạng thái</p>
+<p class="p1"><span class="Apple-converted-space">      </span>tracking hiện tại của HĐ gốc.</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="diagram"&gt;&lt;pre class="mermaid"&gt;</p>
+<p class="p1">sequenceDiagram</p>
+<p class="p1"><span class="Apple-converted-space">    </span>actor User</p>
+<p class="p1"><span class="Apple-converted-space">    </span>participant Platform Service</p>
+<p class="p1"><span class="Apple-converted-space">    </span>participant Hotel Service</p>
+<p class="p1"><span class="Apple-converted-space">    </span>participant Partner</p>
+<p class="p1"><span class="Apple-converted-space">    </span>participant ERP</p>
+<p class="p1"><span class="Apple-converted-space">    </span>participant AF Service</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>User-&gt;&gt;Platform Service: Huỷ booking (1 phòng / toàn bộ) trong Pocket</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Platform Service-&gt;&gt;Hotel Service: Call huỷ</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Hotel Service-&gt;&gt;Partner: Request huỷ</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Partner--&gt;&gt;Hotel Service: Số tiền bị charge</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Hotel Service-&gt;&gt;Hotel Service: Tính tiền hoàn</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Hotel Service-&gt;&gt;Platform Service: Lưu thông tin huỷ</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Platform Service-&gt;&gt;Platform Service: Query trackingInvoice theo Tid</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>alt Không tồn tại / Error-Cancel</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Platform Service-&gt;&gt;Platform Service: Không làm gì thêm</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else Init</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Platform Service-&gt;&gt;Platform Service: Cancel request</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else Pending</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Platform Service-&gt;&gt;ERP: CancelERPRecordTask</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ERP--&gt;&gt;Platform Service: status = CANCEL</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Platform Service-&gt;&gt;Platform Service: Chặn xuất hóa đơn</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else Success</p>
+<p class="p1"><span class="Apple-converted-space">        </span>alt Partial — huỷ 1 phần</p>
+<p class="p1"><span class="Apple-converted-space">            </span>Platform Service-&gt;&gt;Platform Service: Build HĐ điều chỉnh phần huỷ + giữ HĐ gốc</p>
+<p class="p1"><span class="Apple-converted-space">        </span>else Full — huỷ toàn bộ</p>
+<p class="p1"><span class="Apple-converted-space">            </span>Platform Service-&gt;&gt;Platform Service: Build HĐ điều chỉnh = 0 + kèm HĐ gốc</p>
+<p class="p1"><span class="Apple-converted-space">        </span>end</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Platform Service-&gt;&gt;ERP: Gửi HĐ điều chỉnh</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ERP-&gt;&gt;ERP: Xuất HĐ thay thế</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ERP-&gt;&gt;AF Service: Request gửi mail HĐ điều chỉnh</p>
+<p class="p1"><span class="Apple-converted-space">        </span>AF Service--&gt;&gt;User: Email HĐ điều chỉnh</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ERP--&gt;&gt;Platform Service: Response kết quả</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Platform Service--&gt;&gt;User: Push notification</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/pre&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 05 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;section&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="sec-head"&gt;&lt;span class="sec-num"&gt;05&lt;/span&gt;&lt;h2&gt;Activity — tạo hóa đơn&lt;/h2&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="sec-desc"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Hai điểm khởi tạo (in-app / CS-CRM) hội tụ về Platform Service, rẽ nhánh theo phản hồi ERP.</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="diagram"&gt;&lt;pre class="mermaid"&gt;</p>
+<p class="p1">flowchart TD</p>
+<p class="p1"><span class="Apple-converted-space">    </span>A1([User thanh toán trong app]) --&gt; B1[Hotel Service lưu Pocket]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>A2([CS tạo request trên CRM]) --&gt; B2[CRM generate csTicketId]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>B1 --&gt; C[Platform Service nhận request]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>B2 --&gt; C</p>
+<p class="p1"><span class="Apple-converted-space">    </span>C --&gt; D[Validate request]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>D --&gt; E[Lấy transaction theo Tid]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>E --&gt; F[Tạo trackingInvoiceStatus = Init]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>F --&gt; G[Gửi request xuất HĐ đến ERP]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>G --&gt; H{ERP phản hồi?}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>H --&gt;|Error/Timeout| I[Update status = Error/Cancel]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>I --&gt; Z1([Kết thúc])</p>
+<p class="p1"><span class="Apple-converted-space">    </span>H --&gt;|202 Accepted| J[Update status = Pending]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>J --&gt; K[ERP gửi request đến AF Service]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>K --&gt; L[AF Service gửi mail HĐ cho user]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>L --&gt; M[ERP callback về Platform Service]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>M --&gt; N[Update status = Success, lưu DB]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>N --&gt; O[Update status trên CRM]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>O --&gt; Z2([Kết thúc])</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/pre&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 06 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;section&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="sec-head"&gt;&lt;span class="sec-num"&gt;06&lt;/span&gt;&lt;h2&gt;Activity — huỷ&lt;/h2&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="sec-desc"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Toàn bộ nhánh quyết định của luồng huỷ, từ tính tiền hoàn đến từng kết cục theo trạng thái</p>
+<p class="p1"><span class="Apple-converted-space">      </span>tracking.</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="diagram"&gt;&lt;pre class="mermaid"&gt;</p>
+<p class="p1">flowchart TD</p>
+<p class="p1"><span class="Apple-converted-space">    </span>A([User huỷ booking trong Pocket]) --&gt; B[Platform Service call Hotel Service]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>B --&gt; C[Hotel Service gọi Partner]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>C --&gt; D[Partner trả số tiền charge]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>D --&gt; E[Hotel Service tính tiền hoàn]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>E --&gt; F[Hotel Service lưu info huỷ → Platform]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>F --&gt; G{Query trackingInvoice theo Tid}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>G --&gt;|Không tồn tại / Error/Cancel| Z1([Kết thúc: không làm gì])</p>
+<p class="p1"><span class="Apple-converted-space">    </span>G --&gt;|Init| CR[Cancel request] --&gt; Z2([Kết thúc])</p>
+<p class="p1"><span class="Apple-converted-space">    </span>G --&gt;|Pending| P1[CancelERPRecordTask] --&gt; P2[ERP update = CANCEL] --&gt; P3[Chặn xuất hóa đơn] --&gt; P4[Push noti: đã huỷ, không xuất HĐ] --&gt; Z2</p>
+<p class="p1"><span class="Apple-converted-space">    </span>G --&gt;|Success| S{Loại huỷ}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>S --&gt;|Partial 1 phần| S1[Build HĐ điều chỉnh phần huỷ + giữ HĐ gốc]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>S --&gt;|Full toàn bộ| S2[Build HĐ điều chỉnh = 0 + kèm HĐ gốc]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>S1 --&gt; T[Gửi HĐ điều chỉnh đến ERP]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>S2 --&gt; T</p>
+<p class="p1"><span class="Apple-converted-space">    </span>T --&gt; U[ERP xuất HĐ thay thế]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>U --&gt; V[ERP gọi AF Service]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>V --&gt; W[AF gửi mail HĐ điều chỉnh cho user]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>W --&gt; X[ERP response kết quả về Platform]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>X --&gt; Y[Push notification cho user]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/pre&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="legend"&gt;Legend trạng thái: &lt;code&gt;Init&lt;/code&gt; · &lt;code&gt;Pending&lt;/code&gt; · &lt;code&gt;Success&lt;/code&gt; · &lt;code&gt;Error/Cancel&lt;/code&gt;&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 07 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;section&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="sec-head"&gt;&lt;span class="sec-num"&gt;07&lt;/span&gt;&lt;h2&gt;BPMN (dạng lane)&lt;/h2&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="sec-desc"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Luồng tạo hóa đơn theo pool/lane từng service — thể hiện điểm bàn giao trách nhiệm và</p>
+<p class="p1"><span class="Apple-converted-space">      </span>event bất đồng bộ (202 → callback).</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="diagram"&gt;&lt;pre class="mermaid"&gt;</p>
+<p class="p1">flowchart TD</p>
+<p class="p1"><span class="Apple-converted-space">    </span>subgraph L1["Lane: User / CRM"]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Start(("Start: thanh toán / tạo request"))</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p1"><span class="Apple-converted-space">    </span>subgraph L2["Lane: Platform Service"]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>V["Validate + lấy trans theo Tid"] --&gt; Tr["Tạo tracking = Init"]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p1"><span class="Apple-converted-space">    </span>subgraph L3["Lane: ERP Service"]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>X["Xử lý xuất HĐ"] --&gt; R{"ERP response?"}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>R --&gt;|"Error/Timeout"| E1["Update = Error/Cancel"]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>R --&gt;|"202"| E2["Update = Pending"]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p1"><span class="Apple-converted-space">    </span>subgraph L4["Lane: AF Service"]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>M["Gửi mail HĐ"] --&gt; CB["Callback success"]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p1"><span class="Apple-converted-space">    </span>subgraph L5["Lane: Platform Service (kết thúc)"]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>FIN["Update = Success + lưu DB + update CRM"]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>end</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>Start --&gt; V</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Tr --&gt; X</p>
+<p class="p1"><span class="Apple-converted-space">    </span>X --&gt;|"sau 202: trigger mail"| M</p>
+<p class="p1"><span class="Apple-converted-space">    </span>X --&gt;|"response"| R</p>
+<p class="p1"><span class="Apple-converted-space">    </span>CB --&gt;|"callback"| FIN</p>
+<p class="p1"><span class="Apple-converted-space">    </span>E1 --&gt; End1(("End"))</p>
+<p class="p1"><span class="Apple-converted-space">    </span>FIN --&gt; End2(("End"))</p>
+<p class="p1"><span class="Apple-converted-space">    </span>E2 -.-&gt; End1</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/pre&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;footer&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>Bộ sơ đồ dựng từ bản mô tả nghiệp vụ đã chốt — Platform / Hotel / ERP / AF Service,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>trạng thái tracking Init → Pending → Success/Error.</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/footer&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>mermaid.initialize({</p>
+<p class="p1"><span class="Apple-converted-space">    </span>startOnLoad: true,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>theme: 'base',</p>
+<p class="p1"><span class="Apple-converted-space">    </span>fontFamily: 'ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif',</p>
+<p class="p1"><span class="Apple-converted-space">    </span>themeVariables: {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>primaryColor: '#EFEBF8',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>primaryBorderColor: '#6B5CA5',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>primaryTextColor: '#2B2733',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>secondaryColor: '#F5EEE1',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>secondaryBorderColor: '#C8A97E',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>tertiaryColor: '#FBFAF7',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>lineColor: '#5C5566',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>actorBorder: '#6B5CA5',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>actorBkg: '#EFEBF8',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>signalColor: '#2B2733',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>noteBkgColor: '#F5EEE1',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>noteBorderColor: '#C8A97E',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>clusterBkg: '#FBFAF7',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>clusterBorder: '#E4DFD4',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>edgeLabelBackground: '#FBFAF7'</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>flowchart: { htmlLabels: true },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>sequence: { actorMargin: 40, mirrorActors: false }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
