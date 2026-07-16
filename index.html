@@ -104,7 +104,7 @@
     <h1>Tạo &amp; điều chỉnh hóa đơn</h1>
   </header>
 
-  <!-- 01 -->
+    <!-- 01 -->
   <section>
     <div class="sec-head"><span class="sec-num">01</span><h2>Mindmap</h2></div>
    
@@ -150,211 +150,620 @@ mindmap
   <!-- 02 -->
   <section>
     <div class="sec-head"><span class="sec-num">02</span><h2>Use case</h2></div>
-    <div class="diagram"><pre class="mermaid">
-flowchart LR
-    CS([CS Agent])
-    User([User])
-    AF([AF Service])
-    ERP([ERP Service])
+    <div class="sec-desc"><b>Primary actor:</b> Khách hàng, Nhân viên CS. <b>Secondary (system):</b> CRM (Mobio) — nhận status &amp; ticket; ERP · VACOM (đối tác xuất HĐ) · AF (email). <b>«extend» [tick + điền info]</b>: user chỉ điền info HĐ lúc booking nếu tick checkbox "Xuất HĐ" tại màn <b>Pax Info</b>; không tick → <b>Tạo yêu cầu HĐ qua CS</b>. Các use case đều <code>«include»</code> Phát hành hóa đơn (ERP → VACOM). CRM nối "Xem trạng thái" &amp; "Tạo yêu cầu qua CS".</div>
+    <div class="diagram">
+    <svg viewBox="0 0 900 660" width="100%" style="max-width:900px;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif">
+  <defs>
+    <marker id="ucH-arrow" markerWidth="12" markerHeight="12" refX="9" refY="4" orient="auto">
+      <path d="M1,1 L9,4 L1,7" fill="none" stroke="#5C5566" stroke-width="1.4"/>
+    </marker>
+    <g id="stickH">
+      <circle cx="0" cy="-30" r="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="2"/>
+      <line x1="0" y1="-21" x2="0" y2="2" stroke="#6B5CA5" stroke-width="2"/>
+      <line x1="-14" y1="-12" x2="14" y2="-12" stroke="#6B5CA5" stroke-width="2"/>
+      <line x1="0" y1="2" x2="-12" y2="20" stroke="#6B5CA5" stroke-width="2"/>
+      <line x1="0" y1="2" x2="12" y2="20" stroke="#6B5CA5" stroke-width="2"/>
+    </g>
+  </defs>
 
-    subgraph SYS["Hệ thống Hóa đơn"]
-        UC1[CS tạo request HĐ trên CRM]
-        UC2[Thanh toán &amp; xuất HĐ trong app]
-        UC3[Xem trạng thái HĐ trong Pocket]
-        UC4[Huỷ booking &amp; điều chỉnh HĐ]
-        UC5[Nhận thông báo kết quả]
-        UC6[Xuất HĐ / HĐ thay thế]
-        UC7[Gửi email hóa đơn]
-    end
+  <rect x="250" y="60" width="440" height="545" rx="10" fill="#FBFAF7" stroke="#C8A97E" stroke-width="1.5"/>
+  <text x="470" y="86" text-anchor="middle" font-size="14" font-weight="600" fill="#5C5566">Hệ thống Xuất HĐ VAT — Booking</text>
 
-    CS --> UC1
-    User --> UC2
-    User --> UC3
-    User --> UC4
-    User --> UC5
-    UC1 -.include.-> UC6
-    UC2 -.include.-> UC6
-    UC4 -.include.-> UC6
-    UC6 -.include.-> UC7
-    UC7 --- AF
-    UC6 --- ERP
-    </pre></div>
+  <!-- association (solid, no arrowhead) -->
+  <g stroke="#5C5566" stroke-width="1.4" fill="none">
+    <line x1="112" y1="180" x2="282" y2="115"/>
+    <line x1="112" y1="180" x2="278" y2="220"/>
+    <line x1="112" y1="180" x2="278" y2="325"/>
+    <line x1="112" y1="180" x2="278" y2="430"/>
+    <line x1="112" y1="560" x2="272" y2="545"/>
+    <line x1="112" y1="375" x2="278" y2="325"/>
+    <line x1="112" y1="375" x2="272" y2="545"/>
+    <line x1="670" y1="325" x2="788" y2="230"/>
+    <line x1="672" y1="342" x2="788" y2="380"/>
+    <line x1="670" y1="352" x2="788" y2="530"/>
+  </g>
+
+  <!-- extend + include (dashed, open arrow) -->
+  <g stroke="#5C5566" stroke-width="1.4" fill="none" stroke-dasharray="6 4" marker-end="url(#ucH-arrow)">
+    <line x1="360" y1="190" x2="360" y2="140"/>
+    <line x1="438" y1="220" x2="516" y2="318"/>
+    <line x1="438" y1="430" x2="516" y2="342"/>
+    <line x1="438" y1="545" x2="520" y2="352"/>
+  </g>
+  <text x="368" y="172" font-size="11" fill="#C8A97E">«extend» [tick + điền info]</text>
+  <text x="474" y="262" font-size="11" fill="#6B5CA5">«include»</text>
+  <text x="470" y="398" font-size="11" fill="#6B5CA5">«include»</text>
+  <text x="452" y="470" font-size="11" fill="#6B5CA5">«include»</text>
+
+  <!-- use cases -->
+  <g font-size="13" fill="#2B2733" text-anchor="middle">
+    <ellipse cx="360" cy="115" rx="82" ry="30" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.8"/>
+    <text x="360" y="119">Đặt phòng (booking)</text>
+    <ellipse cx="360" cy="220" rx="90" ry="32" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.8"/>
+    <text x="360" y="216">Yêu cầu xuất HĐ</text><text x="360" y="230">khi booking</text>
+    <ellipse cx="360" cy="325" rx="82" ry="30" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.8"/>
+    <text x="360" y="329">Xem trạng thái HĐ</text>
+    <ellipse cx="360" cy="430" rx="86" ry="32" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.8"/>
+    <text x="360" y="426">Huỷ booking &amp;</text><text x="360" y="440">điều chỉnh HĐ</text>
+    <ellipse cx="360" cy="545" rx="90" ry="32" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.8"/>
+    <text x="360" y="541">Tạo yêu cầu HĐ</text><text x="360" y="555">qua CS</text>
+    <ellipse cx="590" cy="335" rx="80" ry="32" fill="#E6DEF3" stroke="#6B5CA5" stroke-width="2"/>
+    <text x="590" y="339">Phát hành hóa đơn</text>
+  </g>
+
+  <!-- actors -->
+  <use href="#stickH" x="90" y="180"/>
+  <text x="90" y="222" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2733">Khách hàng</text>
+  <use href="#stickH" x="90" y="375"/>
+  <text x="90" y="417" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2733">CRM (Mobio)</text>
+  <use href="#stickH" x="90" y="560"/>
+  <text x="90" y="602" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2733">Nhân viên CS</text>
+  <use href="#stickH" x="810" y="230"/>
+  <text x="810" y="272" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2733">ERP Service</text>
+  <use href="#stickH" x="810" y="380"/>
+  <text x="810" y="422" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2733">VACOM</text>
+  <use href="#stickH" x="810" y="530"/>
+  <text x="810" y="572" text-anchor="middle" font-size="13" font-weight="600" fill="#2B2733">AF Service</text>
+</svg>
+
+    </div>
   </section>
 
   <!-- 03 -->
   <section>
     <div class="sec-head"><span class="sec-num">03</span><h2>Sequence — tạo hóa đơn</h2></div>
-   
+    <div class="sec-desc">Rẽ nhánh ngay tại booking: tick + điền info hợp lệ → Hotel Service lưu theo booking; không tick → raise CS tạo request (csTicketId). Downstream ERP/AF/tracking giống luồng chung. <code>-&gt;&gt;</code> sync · <code>--&gt;&gt;</code> return · <code>-)</code> async · thanh dọc = activation.</div>
     <div class="diagram"><pre class="mermaid">
 sequenceDiagram
-    actor User
+    actor User as Khách hàng
+    actor CS as Nhân viên CS
+    participant Hotel as Hotel Service
     participant CRM
-    participant Platform Service
+    participant Platform as Platform Service
     participant ERP
-    participant AF Service
+    participant VACOM
+    participant AF as AF Service
 
-    alt In-app payment
-        User->>Platform Service: Thanh toán thành công (lưu Pocket)
-    else CS tạo trên CRM
-        CRM->>Platform Service: Request tạo HĐ (csTicketId)
+    User->>Hotel: Đặt phòng, mở màn Pax Info
+
+    alt Tick Xuất HĐ và điền info
+        User->>Hotel: Nhập info HĐ
+        Hotel->>Hotel: Validate FE
+        Hotel->>Platform: Lưu info HĐ theo booking
+    else Không tick
+        User->>CS: Liên hệ yêu cầu xuất HĐ
+        CS->>CRM: Nhập info HĐ của khách
+        CRM->>Platform: Tạo request HĐ
     end
-    Platform Service->>Platform Service: Validate request, lấy trans theo Tid
-    Platform Service->>Platform Service: Tạo trackingInvoiceStatus = Init
-    Platform Service->>ERP: Gửi request xuất HĐ
-    alt Error / Timeout
-        ERP-->>Platform Service: Error / Timeout
-        Platform Service->>Platform Service: update status = Error/Cancel
-        Platform Service-->>User: update status (fail)
-    else 202 Accepted
-        ERP-->>Platform Service: 202
-        Platform Service->>Platform Service: update status = Pending
-        ERP->>AF Service: Request gửi mail HĐ
-        AF Service-->>User: Email hóa đơn
-        ERP-->>Platform Service: Callback success
-        Platform Service->>Platform Service: update status = Success, lưu DB
-        Platform Service-->>User: update status
+
+    activate Platform
+    Platform->>Platform: Validate BE
+
+    alt Không hợp lệ
+        Platform->>Platform: Status Error
+        Platform-->>CRM: Sync trạng thái Error
+        Platform-->>User: Báo lỗi
+    else Hợp lệ
+        Platform->>Platform: Tạo trackingInvoiceStatus Init
+        Platform->>ERP: Gửi request xuất HĐ
+        activate ERP
+
+        ERP-->>Platform: Accepted
+        Platform->>Platform: Status Pending
+        Platform-->>CRM: Sync trạng thái Pending
+
+        Note over ERP: Batch xử lý theo lịch
+
+        ERP->>ERP: Tạo danh sách HĐ cần xuất
+        ERP->>VACOM: Call API xuất HĐ VAT
+        activate VACOM
+
+        alt VACOM lỗi hoặc Timeout
+            VACOM-->>ERP: Fail
+            ERP-->>Platform: Status Error
+            Platform-->>CRM: Sync trạng thái Error
+            Platform-->>User: Thông báo thất bại
+        else Xuất thành công
+            VACOM-->>ERP: Xuất HĐ thành công
+            ERP->>AF: Request gửi mail HĐ VAT
+            AF-->>User: Email hóa đơn VAT
+            ERP-->>Platform: Callback success
+            Platform->>Platform: Status Success
+            Platform-->>CRM: Sync trạng thái Success
+            Platform-->>User: Push notification thành công
+        end
+        deactivate VACOM
+
+        deactivate ERP
     end
+
+    deactivate Platform
     </pre></div>
-    <p class="legend">Legend trạng thái: <code>Init</code> · <code>Pending</code> · <code>Success</code> · <code>Error/Cancel</code></p>
   </section>
 
   <!-- 04 -->
   <section>
     <div class="sec-head"><span class="sec-num">04</span><h2>Sequence — điều chỉnh / huỷ</h2></div>
-    
+    <div class="sec-desc">Cùng convention như trên: <code>-&gt;&gt;</code> sync · <code>--&gt;&gt;</code> return · <code>-)</code> async (email / push). Fragment <code>alt/else</code> rẽ theo trạng thái tracking; fragment lồng cho Partial / Full.</div>
     <div class="diagram"><pre class="mermaid">
 sequenceDiagram
-    actor User
+    actor User as Khách hàng
+    participant CRM
     participant Platform Service
     participant Hotel Service
     participant Partner
     participant ERP
+    participant VACOM
     participant AF Service
 
-    User->>Platform Service: Huỷ booking (1 phòng / toàn bộ) trong Pocket
-    Platform Service->>Hotel Service: Call huỷ
-    Hotel Service->>Partner: Request huỷ
-    Partner-->>Hotel Service: Số tiền bị charge
+    User->>+Platform Service: Mở booking trong Pocket
+    Platform Service->>Platform Service: Kiểm tra booking có huỷ được không
+    alt Không huỷ được
+        Platform Service-)User: Ẩn nút "Huỷ" tại màn Pocket
+    else Huỷ được
+        Platform Service-)User: Hiển thị nút "Huỷ"
+        User->>Platform Service: Bấm Huỷ booking (1 phòng / toàn bộ)
+        Platform Service->>+Hotel Service: Call huỷ
+    Hotel Service->>+Partner: Request huỷ
+    Partner-->>-Hotel Service: Số tiền bị charge
     Hotel Service->>Hotel Service: Tính tiền hoàn
-    Hotel Service->>Platform Service: Lưu thông tin huỷ
+    Hotel Service-->>-Platform Service: Lưu thông tin huỷ
     Platform Service->>Platform Service: Query trackingInvoice theo Tid
 
     alt Không tồn tại / Error-Cancel
         Platform Service->>Platform Service: Không làm gì thêm
     else Init
         Platform Service->>Platform Service: Cancel request
+        Platform Service-)CRM: Sync trạng thái = Cancel
     else Pending
-        Platform Service->>ERP: CancelERPRecordTask
-        ERP-->>Platform Service: status = CANCEL
+        Platform Service->>+ERP: CancelERPRecordTask
+        ERP-->>-Platform Service: status = CANCEL
         Platform Service->>Platform Service: Chặn xuất hóa đơn
+        Platform Service-)CRM: Sync trạng thái = Cancel
     else Success
         alt Partial — huỷ 1 phần
             Platform Service->>Platform Service: Build HĐ điều chỉnh phần huỷ + giữ HĐ gốc
         else Full — huỷ toàn bộ
             Platform Service->>Platform Service: Build HĐ điều chỉnh = 0 + kèm HĐ gốc
         end
-        Platform Service->>ERP: Gửi HĐ điều chỉnh
-        ERP->>ERP: Xuất HĐ thay thế
-        ERP->>AF Service: Request gửi mail HĐ điều chỉnh
-        AF Service-->>User: Email HĐ điều chỉnh
-        ERP-->>Platform Service: Response kết quả
+        Platform Service->>+ERP: Gửi HĐ điều chỉnh (vào hàng chờ)
+        ERP-->>Platform Service: 202 Accepted (đã nhận)
+        Platform Service->>Platform Service: status = Pending
+        Platform Service-)CRM: Sync trạng thái = Pending
+        Note over ERP: Cron/timer theo lịch (batch) tại ERP — không realtime
+        ERP->>ERP: Tạo danh sách HĐ điều chỉnh cần xuất
+        ERP->>+VACOM: Call API xuất HĐ thay thế
+        VACOM-->>-ERP: Xuất HĐ thay thế thành công
+        ERP-)AF Service: Request gửi mail HĐ điều chỉnh
+        AF Service-)User: Email HĐ điều chỉnh
+        ERP-)Platform Service: Callback success
+        Platform Service->>Platform Service: status = Success (đã điều chỉnh)
+        Platform Service-)CRM: Sync trạng thái = Success
+        deactivate ERP
     end
-    Platform Service-->>User: Push notification
+        Platform Service-)User: Push notification
+    end
+    deactivate Platform Service
     </pre></div>
   </section>
 
   <!-- 05 -->
   <section>
     <div class="sec-head"><span class="sec-num">05</span><h2>Activity — tạo hóa đơn</h2></div>
-    
-    <div class="diagram"><pre class="mermaid">
-flowchart TD
-    A1([User thanh toán trong app]) --> B1[Hotel Service lưu Pocket]
-    A2([CS tạo request trên CRM]) --> B2[CRM generate csTicketId]
-    B1 --> C[Platform Service nhận request]
-    B2 --> C
-    C --> D[Validate request]
-    D --> E[Lấy transaction theo Tid]
-    E --> F[Tạo trackingInvoiceStatus = Init]
-    F --> G[Gửi request xuất HĐ đến ERP]
-    G --> H{ERP phản hồi?}
-    H -->|Error/Timeout| I[Update status = Error/Cancel]
-    I --> Z1([Kết thúc])
-    H -->|202 Accepted| J[Update status = Pending]
-    J --> K[ERP gửi request đến AF Service]
-    K --> L[AF Service gửi mail HĐ cho user]
-    L --> M[ERP callback về Platform Service]
-    M --> N[Update status = Success, lưu DB]
-    N --> O[Update status trên CRM]
-    O --> Z2([Kết thúc])
-    </pre></div>
+    <div class="sec-desc">Lane theo actor: Khách hàng · CS · CRM · Hotel · Platform · ERP · VACOM · AF. <b>2 cách</b>: <b>[Cách A – tick]</b> điền info tại Hotel Service (màn Pax Info); <b>[Cách B – CS]</b> user <b>liên hệ CS</b> → CS tạo ticket → CRM tạo request. Platform <b>validate</b> (gồm chống trùng) → <b>Hợp lệ?</b> → tracking → cron → VACOM → <b>fork song song</b> (Success+push ∥ email) → join. <b>Sync trạng thái lên CRM</b> ở mỗi mốc.</div>
+    <div class="diagram">
+    <svg viewBox="0 0 1592 2634" width="100%" style="max-width:1592px;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif">
+<defs><marker id="af" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#5C5566"/></marker></defs>
+<rect x="12" y="46" width="196" height="2576" fill="#FBFAF7" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="110.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">Khách hàng</text>
+<rect x="208" y="46" width="196" height="2576" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="208" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="306.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">Nhân viên CS</text>
+<rect x="404" y="46" width="196" height="2576" fill="#FBFAF7" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="404" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="502.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">CRM</text>
+<rect x="600" y="46" width="196" height="2576" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="600" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="698.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">Hotel Service</text>
+<rect x="796" y="46" width="196" height="2576" fill="#FBFAF7" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="796" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="894.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">Platform Service</text>
+<rect x="992" y="46" width="196" height="2576" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="992" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="1090.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">ERP</text>
+<rect x="1188" y="46" width="196" height="2576" fill="#FBFAF7" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="1188" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="1286.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">VACOM</text>
+<rect x="1384" y="46" width="196" height="2576" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="1384" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="1482.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">AF Service</text>
+<path d="M110.0,134.0 L110.0,179.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M110.0,227.0 L110.0,261.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M110.0,309.0 L110.0,327.0 L698.0,327.0 L698.0,343.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="404.0" y="323.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Cách A - tick]</tspan></text>
+<path d="M698.0,391.0 L698.0,425.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M698.0,473.0 L698.0,573.0 L894.0,573.0 L894.0,589.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M110.0,309.0 L110.0,343.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="118.0" y="326.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Cách B - CS]</tspan></text>
+<path d="M110.0,391.0 L110.0,409.0 L306.0,409.0 L306.0,425.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,473.0 L306.0,491.0 L502.0,491.0 L502.0,507.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M502.0,555.0 L502.0,573.0 L894.0,573.0 L894.0,589.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M894.0,637.0 L894.0,671.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M894.0,719.0 L894.0,753.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M894.0,801.0 L894.0,819.0 L110.0,819.0 L110.0,835.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="502.0" y="815.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Không hợp lệ]</tspan></text>
+<path d="M110.0,883.0 L110.0,928.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M894.0,801.0 L894.0,835.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="902.0" y="818.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Hợp lệ]</tspan></text>
+<path d="M894.0,883.0 L894.0,917.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M894.0,965.0 L894.0,983.0 L1090.0,983.0 L1090.0,999.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1090.0,1047.0 L1090.0,1065.0 L894.0,1065.0 L894.0,1081.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="992.0" y="1061.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Error/Timeout]</tspan></text>
+<path d="M894.0,1129.0 L894.0,1147.0 L502.0,1147.0 L502.0,1163.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M502.0,1211.0 L502.0,1240.0 L894.0,1240.0 L894.0,1256.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1090.0,1047.0 L1090.0,1311.0 L894.0,1311.0 L894.0,1327.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="992.0" y="1307.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[202 Accepted]</tspan></text>
+<path d="M894.0,1375.0 L894.0,1393.0 L502.0,1393.0 L502.0,1409.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M502.0,1457.0 L502.0,1475.0 L1090.0,1475.0 L1090.0,1491.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1090.0,1539.0 L1090.0,1573.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1090.0,1621.0 L1090.0,1639.0 L1286.0,1639.0 L1286.0,1655.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1286.0,1703.0 L1286.0,1737.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1286.0,1785.0 L1286.0,1803.0 L1090.0,1803.0 L1090.0,1819.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="1188.0" y="1799.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Thành công]</tspan></text>
+<path d="M1090.0,1867.0 L1090.0,1903.0 L894.0,1903.0 L894.0,1919.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1286.0,1785.0 L1286.0,2377.0 L894.0,2377.0 L894.0,2393.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="1090.0" y="2373.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Thất bại]</tspan></text>
+<path d="M894.0,2441.0 L894.0,2459.0 L502.0,2459.0 L502.0,2475.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M502.0,2523.0 L502.0,2552.0 L894.0,2552.0 L894.0,2568.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M894.0,1931.0 L894.0,1983.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M894.0,2031.0 L894.0,2049.0 L502.0,2049.0 L502.0,2065.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M502.0,2113.0 L502.0,2131.0 L894.0,2131.0 L894.0,2147.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M894.0,2195.0 L894.0,2247.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M894.0,1931.0 L894.0,1967.0 L1090.0,1967.0 L1090.0,1983.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1090.0,2031.0 L1090.0,2049.0 L1482.0,2049.0 L1482.0,2065.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1482.0,2113.0 L1482.0,2231.0 L894.0,2231.0 L894.0,2247.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M894.0,2259.0 L894.0,2322.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<circle cx="110.0" cy="121.0" r="11" fill="#2B2733" stroke="#2B2733"/>
+<rect x="29.0" y="179.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="110.0" y="200.5" text-anchor="middle" font-size="11" fill="#2B2733">Đặt phòng → màn Pax</text>
+<text x="110.0" y="213.5" text-anchor="middle" font-size="11" fill="#2B2733">Info</text>
+<polygon points="110.0,261.0 156.0,285.0 110.0,309.0 64.0,285.0" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="110.0" y="282.5" text-anchor="middle" font-size="10.5" fill="#2B2733">Cách yêu cầu</text>
+<text x="110.0" y="295.5" text-anchor="middle" font-size="10.5" fill="#2B2733">xuất HĐ?</text>
+<rect x="617.0" y="343.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="698.0" y="364.5" text-anchor="middle" font-size="11" fill="#2B2733">Tick xuất HĐ + điền</text>
+<text x="698.0" y="377.5" text-anchor="middle" font-size="11" fill="#2B2733">info tại Pax Info</text>
+<rect x="29.0" y="343.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="110.0" y="371.0" text-anchor="middle" font-size="11" fill="#2B2733">Liên hệ CS</text>
+<rect x="617.0" y="425.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="698.0" y="446.5" text-anchor="middle" font-size="11" fill="#2B2733">Lưu info HĐ theo</text>
+<text x="698.0" y="459.5" text-anchor="middle" font-size="11" fill="#2B2733">booking</text>
+<rect x="225.0" y="425.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="306.0" y="453.0" text-anchor="middle" font-size="11" fill="#2B2733">CS tạo ticket</text>
+<rect x="421.0" y="507.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="502.0" y="528.5" text-anchor="middle" font-size="11" fill="#2B2733">CRM tạo request</text>
+<text x="502.0" y="541.5" text-anchor="middle" font-size="11" fill="#2B2733">(csTicketId)</text>
+<polygon points="894.0,589.0 940.0,613.0 894.0,637.0 848.0,613.0" fill="#FFFFFF" stroke="#C8A97E" stroke-width="1.6"/>
+<rect x="813.0" y="671.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="894.0" y="686.0" text-anchor="middle" font-size="11" fill="#2B2733">Validate: mandatory,</text>
+<text x="894.0" y="699.0" text-anchor="middle" font-size="11" fill="#2B2733">format, TID, chống</text>
+<text x="894.0" y="712.0" text-anchor="middle" font-size="11" fill="#2B2733">trùng</text>
+<polygon points="894.0,753.0 940.0,777.0 894.0,801.0 848.0,777.0" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="894.0" y="781.0" text-anchor="middle" font-size="10.5" fill="#2B2733">Hợp lệ?</text>
+<rect x="29.0" y="835.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="110.0" y="863.0" text-anchor="middle" font-size="11" fill="#2B2733">Báo lỗi cho user</text>
+<circle cx="110.0" cy="941.0" r="13" fill="none" stroke="#2B2733" stroke-width="2"/>
+<circle cx="110.0" cy="941.0" r="7" fill="#2B2733"/>
+<rect x="813.0" y="835.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="894.0" y="863.0" text-anchor="middle" font-size="11" fill="#2B2733">Tạo tracking = Init</text>
+<rect x="813.0" y="917.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="894.0" y="945.0" text-anchor="middle" font-size="11" fill="#2B2733">Gửi request xuất HĐ</text>
+<polygon points="1090.0,999.0 1136.0,1023.0 1090.0,1047.0 1044.0,1023.0" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="1090.0" y="1027.0" text-anchor="middle" font-size="10.5" fill="#2B2733">ERP nhận?</text>
+<rect x="813.0" y="1081.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="894.0" y="1109.0" text-anchor="middle" font-size="11" fill="#2B2733">status = Error/Cancel</text>
+<rect x="421.0" y="1163.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="502.0" y="1184.5" text-anchor="middle" font-size="11" fill="#2B2733">Sync trạng thái lên CRM</text>
+<text x="502.0" y="1197.5" text-anchor="middle" font-size="11" fill="#2B2733">(Error)</text>
+<circle cx="894.0" cy="1269.0" r="13" fill="none" stroke="#2B2733" stroke-width="2"/>
+<circle cx="894.0" cy="1269.0" r="7" fill="#2B2733"/>
+<rect x="813.0" y="1327.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="894.0" y="1355.0" text-anchor="middle" font-size="11" fill="#2B2733">status = Pending</text>
+<rect x="421.0" y="1409.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="502.0" y="1430.5" text-anchor="middle" font-size="11" fill="#2B2733">Sync trạng thái lên CRM</text>
+<text x="502.0" y="1443.5" text-anchor="middle" font-size="11" fill="#2B2733">(Pending)</text>
+<rect x="1009.0" y="1491.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1090.0" y="1512.5" text-anchor="middle" font-size="11" fill="#2B2733">Cron: tạo danh sách HĐ</text>
+<text x="1090.0" y="1525.5" text-anchor="middle" font-size="11" fill="#2B2733">cần xuất</text>
+<rect x="1009.0" y="1573.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1090.0" y="1601.0" text-anchor="middle" font-size="11" fill="#2B2733">Call API VACOM</text>
+<rect x="1205.0" y="1655.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1286.0" y="1683.0" text-anchor="middle" font-size="11" fill="#2B2733">Xuất HĐ VAT</text>
+<polygon points="1286.0,1737.0 1332.0,1761.0 1286.0,1785.0 1240.0,1761.0" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="1286.0" y="1765.0" text-anchor="middle" font-size="10.5" fill="#2B2733">Xuất thành công?</text>
+<rect x="1009.0" y="1819.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1090.0" y="1847.0" text-anchor="middle" font-size="11" fill="#2B2733">Callback success</text>
+<rect x="848.0" y="1920.0" width="92" height="10" rx="2" fill="#2B2733"/>
+<text x="948.0" y="1929.0" font-size="10.5" font-style="italic" fill="#5C5566">fork</text>
+<rect x="813.0" y="1983.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="894.0" y="2004.5" text-anchor="middle" font-size="11" fill="#2B2733">status = Success, lưu</text>
+<text x="894.0" y="2017.5" text-anchor="middle" font-size="11" fill="#2B2733">DB</text>
+<rect x="1009.0" y="1983.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1090.0" y="2011.0" text-anchor="middle" font-size="11" fill="#2B2733">Gửi request đến AF</text>
+<rect x="421.0" y="2065.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="502.0" y="2086.5" text-anchor="middle" font-size="11" fill="#2B2733">Sync trạng thái lên CRM</text>
+<text x="502.0" y="2099.5" text-anchor="middle" font-size="11" fill="#2B2733">(Success)</text>
+<rect x="1401.0" y="2065.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1482.0" y="2093.0" text-anchor="middle" font-size="11" fill="#2B2733">Gửi mail HĐ cho user</text>
+<rect x="813.0" y="2147.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="894.0" y="2175.0" text-anchor="middle" font-size="11" fill="#2B2733">Push notification</text>
+<rect x="848.0" y="2248.0" width="92" height="10" rx="2" fill="#2B2733"/>
+<text x="948.0" y="2257.0" font-size="10.5" font-style="italic" fill="#5C5566">join</text>
+<circle cx="894.0" cy="2335.0" r="13" fill="none" stroke="#2B2733" stroke-width="2"/>
+<circle cx="894.0" cy="2335.0" r="7" fill="#2B2733"/>
+<rect x="813.0" y="2393.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="894.0" y="2421.0" text-anchor="middle" font-size="11" fill="#2B2733">status = Error/Cancel</text>
+<rect x="421.0" y="2475.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="502.0" y="2496.5" text-anchor="middle" font-size="11" fill="#2B2733">Sync trạng thái lên CRM</text>
+<text x="502.0" y="2509.5" text-anchor="middle" font-size="11" fill="#2B2733">(Error)</text>
+<circle cx="894.0" cy="2581.0" r="13" fill="none" stroke="#2B2733" stroke-width="2"/>
+<circle cx="894.0" cy="2581.0" r="7" fill="#2B2733"/>
+</svg>
+    </div>
   </section>
 
   <!-- 06 -->
   <section>
     <div class="sec-head"><span class="sec-num">06</span><h2>Activity — huỷ</h2></div>
-   
-    <div class="diagram"><pre class="mermaid">
-flowchart TD
-    A([User huỷ booking trong Pocket]) --> B[Platform Service call Hotel Service]
-    B --> C[Hotel Service gọi Partner]
-    C --> D[Partner trả số tiền charge]
-    D --> E[Hotel Service tính tiền hoàn]
-    E --> F[Hotel Service lưu info huỷ → Platform]
-    F --> G{Query trackingInvoice theo Tid}
-    G -->|Không tồn tại / Error/Cancel| Z1([Kết thúc: không làm gì])
-    G -->|Init| CR[Cancel request] --> Z2([Kết thúc])
-    G -->|Pending| P1[CancelERPRecordTask] --> P2[ERP update = CANCEL] --> P3[Chặn xuất hóa đơn] --> P4[Push noti: đã huỷ, không xuất HĐ] --> Z2
-    G -->|Success| S{Loại huỷ}
-    S -->|Partial 1 phần| S1[Build HĐ điều chỉnh phần huỷ + giữ HĐ gốc]
-    S -->|Full toàn bộ| S2[Build HĐ điều chỉnh = 0 + kèm HĐ gốc]
-    S1 --> T[Gửi HĐ điều chỉnh đến ERP]
-    S2 --> T
-    T --> U[ERP xuất HĐ thay thế]
-    U --> V[ERP gọi AF Service]
-    V --> W[AF gửi mail HĐ điều chỉnh cho user]
-    W --> X[ERP response kết quả về Platform]
-    X --> Y[Push notification cho user]
-    </pre></div>
-    <p class="legend">Legend trạng thái: <code>Init</code> · <code>Pending</code> · <code>Success</code> · <code>Error/Cancel</code></p>
+    <div class="sec-desc">Chia <b>swimlane</b> theo actor. Cùng notation: <b>●</b> initial · <b>◎</b> final (nhiều final cho các nhánh) · <b>◇</b> decision/merge · thanh đen fork/join · guard <code>[...]</code>. Nhánh Success: sau ERP xuất HĐ thay thế, fork gửi mail (AF) song song response về Platform, join rồi push noti.</div>
+    <div class="diagram">
+<svg viewBox="0 0 1396 2798" width="100%" style="max-width:1396px;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif">
+<defs><marker id="af" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#5C5566"/></marker></defs>
+<rect x="12" y="46" width="196" height="2740" fill="#FBFAF7" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="110.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">Khách hàng</text>
+<rect x="208" y="46" width="196" height="2740" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="208" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="306.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">Platform Service</text>
+<rect x="404" y="46" width="196" height="2740" fill="#FBFAF7" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="404" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="502.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">CRM</text>
+<rect x="600" y="46" width="196" height="2740" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="600" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="698.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">Hotel Service</text>
+<rect x="796" y="46" width="196" height="2740" fill="#FBFAF7" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="796" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="894.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">Partner</text>
+<rect x="992" y="46" width="196" height="2740" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="992" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="1090.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">ERP</text>
+<rect x="1188" y="46" width="196" height="2740" fill="#FBFAF7" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="1188" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="1286.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">AF Service</text>
+<path d="M110.0,134.0 L110.0,179.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M110.0,227.0 L110.0,245.0 L306.0,245.0 L306.0,261.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,309.0 L306.0,343.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="314.0" y="326.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Không huỷ được]</tspan></text>
+<path d="M306.0,391.0 L306.0,436.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,309.0 L306.0,327.0 L110.0,327.0 L110.0,343.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="208.0" y="323.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Huỷ được]</tspan></text>
+<path d="M110.0,391.0 L110.0,491.0 L306.0,491.0 L306.0,507.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,555.0 L306.0,573.0 L698.0,573.0 L698.0,589.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M698.0,637.0 L698.0,655.0 L894.0,655.0 L894.0,671.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M894.0,719.0 L894.0,737.0 L698.0,737.0 L698.0,753.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M698.0,801.0 L698.0,835.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M698.0,883.0 L698.0,901.0 L306.0,901.0 L306.0,917.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,965.0 L306.0,1010.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="314.0" y="987.5" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Không tồn tại / Error-Cancel]</tspan></text>
+<path d="M306.0,965.0 L396.0,965.0 L396.0,1067.0 L306.0,1067.0 L306.0,1081.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="306.0" y="1059.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Init]</tspan></text>
+<path d="M306.0,1129.0 L306.0,1174.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,965.0 L399.0,965.0 L399.0,1231.0 L306.0,1231.0 L306.0,1245.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="306.0" y="1223.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Pending]</tspan></text>
+<path d="M306.0,1293.0 L306.0,1311.0 L1090.0,1311.0 L1090.0,1327.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1090.0,1375.0 L1090.0,1393.0 L306.0,1393.0 L306.0,1409.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,1457.0 L306.0,1491.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,1539.0 L306.0,1584.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,965.0 L402.0,965.0 L402.0,1641.0 L306.0,1641.0 L306.0,1655.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="306.0" y="1633.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Success]</tspan></text>
+<path d="M306.0,1703.0 L306.0,1737.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="314.0" y="1720.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Partial]</tspan></text>
+<path d="M306.0,1703.0 L396.0,1703.0 L396.0,1805.0 L306.0,1805.0 L306.0,1819.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<text x="306.0" y="1797.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Full]</tspan></text>
+<path d="M306.0,1785.0 L396.0,1785.0 L396.0,1887.0 L306.0,1887.0 L306.0,1901.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,1867.0 L306.0,1901.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,1949.0 L306.0,1983.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,2031.0 L306.0,2049.0 L1090.0,2049.0 L1090.0,2065.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1090.0,2113.0 L1090.0,2165.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1090.0,2177.0 L1090.0,2229.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1090.0,2277.0 L1090.0,2295.0 L1286.0,2295.0 L1286.0,2311.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1090.0,2177.0 L1180.0,2177.0 L1180.0,2379.0 L1090.0,2379.0 L1090.0,2393.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1286.0,2359.0 L1286.0,2477.0 L306.0,2477.0 L306.0,2493.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M1090.0,2441.0 L1090.0,2477.0 L306.0,2477.0 L306.0,2493.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,2505.0 L306.0,2541.0 L502.0,2541.0 L502.0,2557.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M502.0,2605.0 L502.0,2623.0 L306.0,2623.0 L306.0,2639.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,2687.0 L306.0,2732.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<circle cx="110.0" cy="121.0" r="11" fill="#2B2733" stroke="#2B2733"/>
+<rect x="29.0" y="179.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="110.0" y="207.0" text-anchor="middle" font-size="11" fill="#2B2733">Mở booking trong Pocket</text>
+<polygon points="306.0,261.0 352.0,285.0 306.0,309.0 260.0,285.0" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="306.0" y="282.5" text-anchor="middle" font-size="10.5" fill="#2B2733">Booking huỷ</text>
+<text x="306.0" y="295.5" text-anchor="middle" font-size="10.5" fill="#2B2733">được?</text>
+<rect x="225.0" y="343.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="306.0" y="371.0" text-anchor="middle" font-size="11" fill="#2B2733">Ẩn nút Huỷ tại Pocket</text>
+<rect x="29.0" y="343.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="110.0" y="364.5" text-anchor="middle" font-size="11" fill="#2B2733">Bấm nút Huỷ (1 phòng /</text>
+<text x="110.0" y="377.5" text-anchor="middle" font-size="11" fill="#2B2733">toàn bộ)</text>
+<circle cx="306.0" cy="449.0" r="13" fill="none" stroke="#2B2733" stroke-width="2"/>
+<circle cx="306.0" cy="449.0" r="7" fill="#2B2733"/>
+<rect x="225.0" y="507.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="306.0" y="528.5" text-anchor="middle" font-size="11" fill="#2B2733">Platform call Hotel</text>
+<text x="306.0" y="541.5" text-anchor="middle" font-size="11" fill="#2B2733">Service</text>
+<rect x="617.0" y="589.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="698.0" y="610.5" text-anchor="middle" font-size="11" fill="#2B2733">Hotel Service gọi</text>
+<text x="698.0" y="623.5" text-anchor="middle" font-size="11" fill="#2B2733">Partner</text>
+<rect x="813.0" y="671.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="894.0" y="692.5" text-anchor="middle" font-size="11" fill="#2B2733">Partner trả số tiền</text>
+<text x="894.0" y="705.5" text-anchor="middle" font-size="11" fill="#2B2733">charge</text>
+<rect x="617.0" y="753.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="698.0" y="774.5" text-anchor="middle" font-size="11" fill="#2B2733">Hotel Service tính tiền</text>
+<text x="698.0" y="787.5" text-anchor="middle" font-size="11" fill="#2B2733">hoàn</text>
+<rect x="617.0" y="835.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="698.0" y="863.0" text-anchor="middle" font-size="11" fill="#2B2733">Lưu info huỷ - Platform</text>
+<polygon points="306.0,917.0 352.0,941.0 306.0,965.0 260.0,941.0" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="306.0" y="932.0" text-anchor="middle" font-size="10.5" fill="#2B2733">Query</text>
+<text x="306.0" y="945.0" text-anchor="middle" font-size="10.5" fill="#2B2733">trackingInvoice</text>
+<text x="306.0" y="958.0" text-anchor="middle" font-size="10.5" fill="#2B2733">theo Tid</text>
+<circle cx="306.0" cy="1023.0" r="13" fill="none" stroke="#2B2733" stroke-width="2"/>
+<circle cx="306.0" cy="1023.0" r="7" fill="#2B2733"/>
+<rect x="225.0" y="1081.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="306.0" y="1109.0" text-anchor="middle" font-size="11" fill="#2B2733">Cancel request</text>
+<circle cx="306.0" cy="1187.0" r="13" fill="none" stroke="#2B2733" stroke-width="2"/>
+<circle cx="306.0" cy="1187.0" r="7" fill="#2B2733"/>
+<rect x="225.0" y="1245.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="306.0" y="1273.0" text-anchor="middle" font-size="11" fill="#2B2733">CancelERPRecordTask</text>
+<rect x="1009.0" y="1327.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1090.0" y="1355.0" text-anchor="middle" font-size="11" fill="#2B2733">ERP update = CANCEL</text>
+<rect x="225.0" y="1409.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="306.0" y="1437.0" text-anchor="middle" font-size="11" fill="#2B2733">Chặn xuất hóa đơn</text>
+<rect x="225.0" y="1491.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="306.0" y="1512.5" text-anchor="middle" font-size="11" fill="#2B2733">Push noti: đã huỷ,</text>
+<text x="306.0" y="1525.5" text-anchor="middle" font-size="11" fill="#2B2733">không xuất HĐ</text>
+<circle cx="306.0" cy="1597.0" r="13" fill="none" stroke="#2B2733" stroke-width="2"/>
+<circle cx="306.0" cy="1597.0" r="7" fill="#2B2733"/>
+<polygon points="306.0,1655.0 352.0,1679.0 306.0,1703.0 260.0,1679.0" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="306.0" y="1683.0" text-anchor="middle" font-size="10.5" fill="#2B2733">Loại huỷ?</text>
+<rect x="225.0" y="1737.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="306.0" y="1758.5" text-anchor="middle" font-size="11" fill="#2B2733">Build HĐ ĐC phần huỷ +</text>
+<text x="306.0" y="1771.5" text-anchor="middle" font-size="11" fill="#2B2733">giữ HĐ gốc</text>
+<rect x="225.0" y="1819.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="306.0" y="1840.5" text-anchor="middle" font-size="11" fill="#2B2733">Build HĐ ĐC = 0 + kèm</text>
+<text x="306.0" y="1853.5" text-anchor="middle" font-size="11" fill="#2B2733">HĐ gốc</text>
+<polygon points="306.0,1901.0 352.0,1925.0 306.0,1949.0 260.0,1925.0" fill="#FFFFFF" stroke="#C8A97E" stroke-width="1.6"/>
+<rect x="225.0" y="1983.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="306.0" y="2004.5" text-anchor="middle" font-size="11" fill="#2B2733">Gửi HĐ điều chỉnh đến</text>
+<text x="306.0" y="2017.5" text-anchor="middle" font-size="11" fill="#2B2733">ERP</text>
+<rect x="1009.0" y="2065.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1090.0" y="2093.0" text-anchor="middle" font-size="11" fill="#2B2733">Xuất HĐ thay thế</text>
+<rect x="1044.0" y="2166.0" width="92" height="10" rx="2" fill="#2B2733"/>
+<text x="1144.0" y="2175.0" font-size="10.5" font-style="italic" fill="#5C5566">fork</text>
+<rect x="1009.0" y="2229.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1090.0" y="2257.0" text-anchor="middle" font-size="11" fill="#2B2733">Gọi AF Service</text>
+<rect x="1205.0" y="2311.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1286.0" y="2339.0" text-anchor="middle" font-size="11" fill="#2B2733">Gửi mail HĐ điều chỉnh</text>
+<rect x="1009.0" y="2393.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1090.0" y="2414.5" text-anchor="middle" font-size="11" fill="#2B2733">Response kết quả về</text>
+<text x="1090.0" y="2427.5" text-anchor="middle" font-size="11" fill="#2B2733">Platform</text>
+<rect x="260.0" y="2494.0" width="92" height="10" rx="2" fill="#2B2733"/>
+<text x="360.0" y="2503.0" font-size="10.5" font-style="italic" fill="#5C5566">join</text>
+<rect x="421.0" y="2557.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="502.0" y="2578.5" text-anchor="middle" font-size="11" fill="#2B2733">Cập nhật trạng thái lên</text>
+<text x="502.0" y="2591.5" text-anchor="middle" font-size="11" fill="#2B2733">CRM</text>
+<rect x="225.0" y="2639.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="306.0" y="2660.5" text-anchor="middle" font-size="11" fill="#2B2733">Push notification cho</text>
+<text x="306.0" y="2673.5" text-anchor="middle" font-size="11" fill="#2B2733">user</text>
+<circle cx="306.0" cy="2745.0" r="13" fill="none" stroke="#2B2733" stroke-width="2"/>
+<circle cx="306.0" cy="2745.0" r="7" fill="#2B2733"/>
+</svg>
+    </div>
+    <p class="legend">Trạng thái tracking: <code>Init</code> · <code>Pending</code> · <code>Success</code> · <code>Error/Cancel</code>.</p>
   </section>
 
   <!-- 07 -->
   <section>
     <div class="sec-head"><span class="sec-num">07</span><h2>BPMN (dạng lane)</h2></div>
-   
+    <div class="sec-desc">Tại màn <b>Pax Info</b>: <code>[Có tick]</code> → Hotel Service điền + lưu; <code>[Không tick]</code> → <b>user liên hệ CS</b> → CS tạo ticket → CRM. Platform <b>validate</b> (gồm chống trùng) → gateway <code>Hợp lệ?</code> → tracking → cron/VACOM → fork song song (email ∥ Success+push) → join. Kèm luồng <b>huỷ / điều chỉnh</b>. Mọi status <b>sync lên CRM</b>.</div>
     <div class="diagram"><pre class="mermaid">
 flowchart TD
-    subgraph L1["Lane: User / CRM"]
-        Start(("Start: thanh toán / tạo request"))
+    subgraph L1["Lane: Khách hàng"]
+        S(("Start: Đặt phòng")) --> PX["Màn Pax Info"]
+        PX --> GW{"Tick 'Xuất HĐ' + điền info?"}
+        CT["Liên hệ CS"]
+        SC(("Start: huỷ / điều chỉnh"))
     end
-    subgraph L2["Lane: Platform Service"]
-        V["Validate + lấy trans theo Tid"] --> Tr["Tạo tracking = Init"]
+    subgraph L2["Lane: Hotel Service"]
+        TICKB["Điền info HĐ tại Pax Info"] --> SAVE["Lưu info HĐ theo booking"]
+        REF["Tính tiền hoàn (gọi Partner)"]
     end
-    subgraph L3["Lane: ERP Service"]
-        X["Xử lý xuất HĐ"] --> R{"ERP response?"}
-        R -->|"Error/Timeout"| E1["Update = Error/Cancel"]
-        R -->|"202"| E2["Update = Pending"]
+    subgraph L3["Lane: CS / CRM"]
+        CSREQ["CS tạo request HĐ (csTicketId)"]
+        SYNC["Cập nhật trạng thái lên CRM"]
     end
-    subgraph L4["Lane: AF Service"]
-        M["Gửi mail HĐ"] --> CB["Callback success"]
+    subgraph L4["Lane: Platform Service"]
+        VAL["Validate (mandatory, format, TID, chống trùng)"] --> VD{"Hợp lệ?"}
+        VD -->|"Không"| BAD["Báo lỗi cho user"]
+        VD -->|"Có"| TR["Tạo tracking = Init"]
+        TR --> SEND["Gửi request xuất HĐ"]
+        SEND --> RESP{"ERP nhận?"}
+        RESP -->|"Error/Timeout"| ERR["status = Error/Cancel"]
+        RESP -->|"202"| PEND["status = Pending"]
+        FIN["status = Success + push noti"]
+        CANDEC{"Booking huỷ được?"}
+        HIDEC["Ẩn nút Huỷ tại Pocket"]
+        QRY["Query tracking + build HĐ điều chỉnh"]
+        ADONE["status = Success (đã điều chỉnh)"]
     end
-    subgraph L5["Lane: Platform Service (kết thúc)"]
-        FIN["Update = Success + lưu DB + update CRM"]
+    subgraph L5["Lane: ERP"]
+        TMR(["⏱ Cron/timer theo lịch"]) --> LST["Tạo danh sách HĐ cần xuất"]
+        LST --> CALL["Call API VACOM"]
+        ADJ["Gửi HĐ điều chỉnh → VACOM"]
     end
+    subgraph L6["Lane: VACOM"]
+        XU["Xuất HĐ VAT"] --> VR{"Xuất thành công?"}
+        XU2["Xuất HĐ thay thế"]
+    end
+    subgraph L7["Lane: AF Service"]
+        MAIL["Gửi email HĐ VAT"]
+    end
+    GW -->|"[Có tick]"| TICKB
+    GW -->|"[Không tick]"| CT
+    CT --> CSREQ
+    SAVE --> VAL
+    CSREQ --> VAL
+    BAD --> E0(("End"))
+    PEND --> TMR
+    PEND -.->|"sync"| SYNC
+    CALL --> XU
+    VR -->|"Thất bại"| ERR
+    VR -->|"Thành công"| FORK{{"fork — song song"}}
+    FORK --> MAIL
+    FORK --> FIN
+    MAIL --> JOIN{{"join"}}
+    FIN --> JOIN
+    FIN -.->|"sync"| SYNC
+    ERR -.->|"sync"| SYNC
+    JOIN --> E1(("End"))
+    ERR --> E2(("End"))
 
-    Start --> V
-    Tr --> X
-    X -->|"sau 202: trigger mail"| M
-    X -->|"response"| R
-    CB -->|"callback"| FIN
-    E1 --> End1(("End"))
-    FIN --> End2(("End"))
-    E2 -.-> End1
+    SC --> CANDEC
+    CANDEC -->|"[Không huỷ được]"| HIDEC --> EH(("End"))
+    CANDEC -->|"[Huỷ được]"| REF
+    REF --> QRY --> ADJ --> XU2 --> ADONE
+    ADONE -.->|"sync"| SYNC
+    ADONE --> E3(("End"))
     </pre></div>
   </section>
-
-  
 
 </div>
 
