@@ -285,19 +285,6 @@
         <div class="sec-head"><span class="sec-num">02A</span><h2>Tổng quan quy trình nghiệp vụ</h2></div>
         <p><b>Luồng phát hành:</b> Khách/CS cung cấp thông tin HĐ → booking thanh toán thành công → Platform validate và tạo tracking → ERP nhận request → batch phát hành qua VACOM → callback kết quả → CRM, email và push notification được cập nhật.</p>
         <p><b>Luồng điều chỉnh:</b> Khách huỷ booking → Hotel Service nhận số tiền charge và tính tiền hoàn → Platform xác định HĐ gốc → tạo một HĐ điều chỉnh độc lập cho từng lần huỷ → đi lại toàn bộ luồng phát hành.</p>
-        <table class="brd-table">
-            <thead><tr><th>Giả định</th><th>Nội dung</th></tr></thead>
-            <tbody>
-            <tr><td>AS-01</td><td>Platform Invoice, ERP và tích hợp VACOM hiện hữu được tái sử dụng; dự án không xây mới toàn bộ hệ thống hóa đơn.</td></tr>
-            <tr><td>AS-02</td><td>Hotel Service là nguồn dữ liệu chuẩn cho booking, trạng thái thanh toán, phòng bị huỷ và số tiền hoàn.</td></tr>
-            <tr><td>AS-03</td><td>Mỗi request có khóa idempotency duy nhất và có thể được retry mà không tạo HĐ trùng.</td></tr>
-            </tbody></table>
-        <table class="brd-table">
-            <thead><tr><th>Ràng buộc</th><th>Nội dung</th></tr></thead>
-            <tbody>
-            <tr><td>CT-01</td><td>Chỉ áp dụng cho nguồn cung OMH trong phase này.</td></tr>
-            <tr><td>CT-02</td><td>Thời gian phát hành phụ thuộc batch schedule của ERP và SLA của VACOM.</td></tr>
-            </tbody></table>
     </section>
 
     <section class="brd">
