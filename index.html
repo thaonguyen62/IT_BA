@@ -120,6 +120,30 @@
     padding: 1px 6px;
   }
 
+
+  .zoomable { cursor: zoom-in; }
+  .zoom-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: var(--bg);
+    overflow: auto;
+    padding: 24px;
+    cursor: zoom-out;
+  }
+  .zoom-overlay .zoom-hint {
+    position: fixed;
+    top: 10px;
+    right: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+  }
+
   footer {
     margin-top: 64px;
     padding-top: 20px;
@@ -178,9 +202,9 @@ mindmap
         Không huỷ được: ẩn nút
         Huỷ toàn bộ: Full
       Kết quả Success
-        Full: HĐ ĐC = 0 + HĐ gốc
+        Full: HĐ ĐC = -100% + HĐ gốc
         Partial: HĐ ĐC + HĐ gốc
-        ERP xuất HĐ thay thế
+        ERP xuất HĐ điều chỉnh
         AF gửi mail HĐ ĐC
         Push noti user
       Rẽ theo tracking
@@ -221,6 +245,7 @@ mindmap
     <line x1="112" y1="560" x2="272" y2="545"/>
     <line x1="112" y1="375" x2="278" y2="325"/>
     <line x1="112" y1="375" x2="272" y2="545"/>
+    <line x1="112" y1="375" x2="529" y2="356"/>
     <line x1="670" y1="325" x2="788" y2="230"/>
     <line x1="672" y1="342" x2="788" y2="380"/>
     <line x1="670" y1="352" x2="788" y2="530"/>
@@ -371,21 +396,14 @@ sequenceDiagram
     Hotel Service-->>-Platform Service: Lưu thông tin huỷ
     Platform Service->>Platform Service: Query trackingInvoice theo Tid
 
-    alt Không tồn tại / Error-Cancel
-        Platform Service->>Platform Service: Không làm gì thêm
-    else Init
-        Platform Service->>Platform Service: Cancel request
-        Platform Service-)CRM: Sync trạng thái = Cancel
-    else Pending
-        Platform Service->>+ERP: CancelERPRecordTask
-        ERP-->>-Platform Service: status = CANCEL
-        Platform Service->>Platform Service: Chặn xuất hóa đơn
-        Platform Service-)CRM: Sync trạng thái = Cancel
-    else Success
+    alt Không tồn tại tracking — chưa có HĐ
+        Platform Service->>Platform Service: Không làm gì thêm (no-op)
+    else Có HĐ — mỗi lần huỷ = 1 HĐ điều chỉnh, đi full luồng
+        Note over Hotel Service,Platform Service: Chờ kết quả tiền hoàn từ Partner rồi mới build HĐ điều chỉnh
         alt Partial — huỷ 1 phần
             Platform Service->>Platform Service: Build HĐ điều chỉnh phần huỷ + giữ HĐ gốc
         else Full — huỷ toàn bộ
-            Platform Service->>Platform Service: Build HĐ điều chỉnh = 0 + kèm HĐ gốc
+            Platform Service->>Platform Service: Build HĐ điều chỉnh = -100% + kèm HĐ gốc
         end
         Platform Service->>+ERP: Gửi HĐ điều chỉnh (vào hàng chờ)
         ERP-->>Platform Service: 202 Accepted (đã nhận)
@@ -393,19 +411,30 @@ sequenceDiagram
         Platform Service-)CRM: Sync trạng thái = Pending
         Note over ERP: Cron/timer theo lịch (batch) tại ERP — không realtime
         ERP->>ERP: Tạo danh sách HĐ điều chỉnh cần xuất
-        ERP->>+VACOM: Call API xuất HĐ thay thế
-        VACOM-->>-ERP: Xuất HĐ thay thế thành công
-        ERP-)AF Service: Request gửi mail HĐ điều chỉnh
-        AF Service-)User: Email HĐ điều chỉnh
-        ERP-)Platform Service: Callback success
-        Platform Service->>Platform Service: status = Success (đã điều chỉnh)
-        Platform Service-)CRM: Sync trạng thái = Success
+        ERP->>VACOM: Call API xuất HĐ điều chỉnh
+        activate VACOM
+        alt VACOM lỗi hoặc Timeout
+            VACOM-->>ERP: Fail
+            ERP-)Platform Service: Callback fail
+            Platform Service->>Platform Service: status = Error
+            Platform Service-)CRM: Sync trạng thái = Error
+            Platform Service-)User: Thông báo thất bại
+        else Xuất thành công
+            VACOM-->>ERP: Xuất HĐ điều chỉnh thành công
+            ERP-)AF Service: Request gửi mail HĐ điều chỉnh
+            AF Service-)User: Email HĐ điều chỉnh
+            ERP-)Platform Service: Callback success
+            Platform Service->>Platform Service: status = Success (đã điều chỉnh)
+            Platform Service-)CRM: Sync trạng thái = Success
+        end
+        deactivate VACOM
         deactivate ERP
     end
         Platform Service-)User: Push notification
     end
     deactivate Platform Service
     </pre></div>
+    <p class="legend"><b>Rule:</b> HĐ điều chỉnh chỉ build sau khi có kết quả tiền hoàn từ Partner. Mỗi lần huỷ = 1 HĐ điều chỉnh riêng, <b>delta độc lập</b> 1 tracking record riêng (<code>parentInvoiceId</code> luôn trỏ HĐ gốc + <code>adjustmentSeq</code>), các tờ chạy độc lập, không cancel/gộp/chờ nhau. 1 tờ fail → retry riêng tờ đó, không ảnh hưởng tờ khác. Record Error <b>không xoá / không ghi đè</b> — Error = chưa xong, phải retry/re-trigger đến khi Success. Chống trùng theo (booking, phòng/lần huỷ).</p>
   </section>
 
   <!-- 05 -->
@@ -578,7 +607,7 @@ sequenceDiagram
     <div class="sec-head"><span class="sec-num">06</span><h2>Activity — huỷ</h2></div>
     <div class="diagram">
 <svg viewBox="0 0 1396 2798" width="100%" style="max-width:1396px;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif">
-<defs><marker id="af" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#5C5566"/></marker></defs>
+<defs><marker id="af2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#5C5566"/></marker></defs>
 <rect x="12" y="46" width="196" height="2740" fill="#FBFAF7" stroke="#E4DFD4" stroke-width="1"/>
 <rect x="12" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
 <text x="110.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">Khách hàng</text>
@@ -600,49 +629,40 @@ sequenceDiagram
 <rect x="1188" y="46" width="196" height="2740" fill="#FBFAF7" stroke="#E4DFD4" stroke-width="1"/>
 <rect x="1188" y="46" width="196" height="34" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
 <text x="1286.0" y="67.0" text-anchor="middle" font-size="13" font-weight="700" fill="#2B2733">AF Service</text>
-<path d="M110.0,134.0 L110.0,179.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M110.0,227.0 L110.0,245.0 L306.0,245.0 L306.0,261.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,309.0 L306.0,343.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M110.0,134.0 L110.0,179.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M110.0,227.0 L110.0,245.0 L306.0,245.0 L306.0,261.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M306.0,309.0 L306.0,343.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
 <text x="314.0" y="326.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Không huỷ được]</tspan></text>
-<path d="M306.0,391.0 L306.0,436.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,309.0 L306.0,327.0 L110.0,327.0 L110.0,343.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,391.0 L306.0,436.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M306.0,309.0 L306.0,327.0 L110.0,327.0 L110.0,343.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
 <text x="208.0" y="323.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Huỷ được]</tspan></text>
-<path d="M110.0,391.0 L110.0,491.0 L306.0,491.0 L306.0,507.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,555.0 L306.0,573.0 L698.0,573.0 L698.0,589.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M698.0,637.0 L698.0,655.0 L894.0,655.0 L894.0,671.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M894.0,719.0 L894.0,737.0 L698.0,737.0 L698.0,753.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M698.0,801.0 L698.0,835.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M698.0,883.0 L698.0,901.0 L306.0,901.0 L306.0,917.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,965.0 L306.0,1010.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<text x="314.0" y="987.5" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Không tồn tại / Error-Cancel]</tspan></text>
-<path d="M306.0,965.0 L396.0,965.0 L396.0,1067.0 L306.0,1067.0 L306.0,1081.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<text x="306.0" y="1059.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Init]</tspan></text>
-<path d="M306.0,1129.0 L306.0,1174.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,965.0 L399.0,965.0 L399.0,1231.0 L306.0,1231.0 L306.0,1245.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<text x="306.0" y="1223.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Pending]</tspan></text>
-<path d="M306.0,1293.0 L306.0,1311.0 L1090.0,1311.0 L1090.0,1327.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M1090.0,1375.0 L1090.0,1393.0 L306.0,1393.0 L306.0,1409.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,1457.0 L306.0,1491.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,1539.0 L306.0,1584.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,965.0 L402.0,965.0 L402.0,1641.0 L306.0,1641.0 L306.0,1655.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<text x="306.0" y="1633.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Success]</tspan></text>
-<path d="M306.0,1703.0 L306.0,1737.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M110.0,391.0 L110.0,491.0 L306.0,491.0 L306.0,507.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M306.0,555.0 L306.0,573.0 L698.0,573.0 L698.0,589.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M698.0,637.0 L698.0,655.0 L894.0,655.0 L894.0,671.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M894.0,719.0 L894.0,737.0 L698.0,737.0 L698.0,753.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M698.0,801.0 L698.0,835.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M698.0,883.0 L698.0,901.0 L306.0,901.0 L306.0,917.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M306.0,965.0 L306.0,1010.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<text x="314.0" y="987.5" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Không tồn tại — chưa có HĐ]</tspan></text>
+<path d="M306.0,965.0 L402.0,965.0 L402.0,1641.0 L306.0,1641.0 L306.0,1655.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<text x="306.0" y="1633.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Có HĐ — mỗi lần huỷ = 1 HĐ ĐC, đi full luồng]</tspan></text>
+<path d="M306.0,1703.0 L306.0,1737.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
 <text x="314.0" y="1720.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Partial]</tspan></text>
-<path d="M306.0,1703.0 L396.0,1703.0 L396.0,1805.0 L306.0,1805.0 L306.0,1819.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,1703.0 L396.0,1703.0 L396.0,1805.0 L306.0,1805.0 L306.0,1819.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
 <text x="306.0" y="1797.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5"><tspan>[Full]</tspan></text>
-<path d="M306.0,1785.0 L396.0,1785.0 L396.0,1887.0 L306.0,1887.0 L306.0,1901.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,1867.0 L306.0,1901.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,1949.0 L306.0,1983.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,2031.0 L306.0,2049.0 L1090.0,2049.0 L1090.0,2065.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M1090.0,2113.0 L1090.0,2165.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M1090.0,2177.0 L1090.0,2229.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M1090.0,2277.0 L1090.0,2295.0 L1286.0,2295.0 L1286.0,2311.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M1090.0,2177.0 L1180.0,2177.0 L1180.0,2379.0 L1090.0,2379.0 L1090.0,2393.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M1286.0,2359.0 L1286.0,2477.0 L306.0,2477.0 L306.0,2493.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M1090.0,2441.0 L1090.0,2477.0 L306.0,2477.0 L306.0,2493.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,2505.0 L306.0,2541.0 L502.0,2541.0 L502.0,2557.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M502.0,2605.0 L502.0,2623.0 L306.0,2623.0 L306.0,2639.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
-<path d="M306.0,2687.0 L306.0,2732.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af)"/>
+<path d="M306.0,1785.0 L396.0,1785.0 L396.0,1887.0 L306.0,1887.0 L306.0,1901.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M306.0,1867.0 L306.0,1901.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M306.0,1949.0 L306.0,1983.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M306.0,2031.0 L306.0,2049.0 L1090.0,2049.0 L1090.0,2065.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M1090.0,2113.0 L1090.0,2165.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M1090.0,2177.0 L1090.0,2229.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M1090.0,2277.0 L1090.0,2295.0 L1286.0,2295.0 L1286.0,2311.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M1090.0,2177.0 L1180.0,2177.0 L1180.0,2379.0 L1090.0,2379.0 L1090.0,2393.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M1286.0,2359.0 L1286.0,2477.0 L306.0,2477.0 L306.0,2493.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M1090.0,2441.0 L1090.0,2477.0 L306.0,2477.0 L306.0,2493.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M306.0,2505.0 L306.0,2541.0 L502.0,2541.0 L502.0,2557.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M502.0,2605.0 L502.0,2623.0 L306.0,2623.0 L306.0,2639.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
+<path d="M306.0,2687.0 L306.0,2732.0" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#af2)"/>
 <circle cx="110.0" cy="121.0" r="11" fill="#2B2733" stroke="#2B2733"/>
 <rect x="29.0" y="179.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
 <text x="110.0" y="207.0" text-anchor="middle" font-size="11" fill="#2B2733">Mở booking trong Pocket</text>
@@ -676,21 +696,6 @@ sequenceDiagram
 <text x="306.0" y="958.0" text-anchor="middle" font-size="10.5" fill="#2B2733">theo Tid</text>
 <circle cx="306.0" cy="1023.0" r="13" fill="none" stroke="#2B2733" stroke-width="2"/>
 <circle cx="306.0" cy="1023.0" r="7" fill="#2B2733"/>
-<rect x="225.0" y="1081.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
-<text x="306.0" y="1109.0" text-anchor="middle" font-size="11" fill="#2B2733">Cancel request</text>
-<circle cx="306.0" cy="1187.0" r="13" fill="none" stroke="#2B2733" stroke-width="2"/>
-<circle cx="306.0" cy="1187.0" r="7" fill="#2B2733"/>
-<rect x="225.0" y="1245.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
-<text x="306.0" y="1273.0" text-anchor="middle" font-size="11" fill="#2B2733">CancelERPRecordTask</text>
-<rect x="1009.0" y="1327.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
-<text x="1090.0" y="1355.0" text-anchor="middle" font-size="11" fill="#2B2733">ERP update = CANCEL</text>
-<rect x="225.0" y="1409.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
-<text x="306.0" y="1437.0" text-anchor="middle" font-size="11" fill="#2B2733">Chặn xuất hóa đơn</text>
-<rect x="225.0" y="1491.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
-<text x="306.0" y="1512.5" text-anchor="middle" font-size="11" fill="#2B2733">Push noti: đã huỷ,</text>
-<text x="306.0" y="1525.5" text-anchor="middle" font-size="11" fill="#2B2733">không xuất HĐ</text>
-<circle cx="306.0" cy="1597.0" r="13" fill="none" stroke="#2B2733" stroke-width="2"/>
-<circle cx="306.0" cy="1597.0" r="7" fill="#2B2733"/>
 <polygon points="306.0,1655.0 352.0,1679.0 306.0,1703.0 260.0,1679.0" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
 <text x="306.0" y="1683.0" text-anchor="middle" font-size="10.5" fill="#2B2733">Loại huỷ?</text>
 <rect x="225.0" y="1737.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
@@ -704,7 +709,7 @@ sequenceDiagram
 <text x="306.0" y="2004.5" text-anchor="middle" font-size="11" fill="#2B2733">Gửi HĐ điều chỉnh đến</text>
 <text x="306.0" y="2017.5" text-anchor="middle" font-size="11" fill="#2B2733">ERP</text>
 <rect x="1009.0" y="2065.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
-<text x="1090.0" y="2093.0" text-anchor="middle" font-size="11" fill="#2B2733">Xuất HĐ thay thế</text>
+<text x="1090.0" y="2093.0" text-anchor="middle" font-size="11" fill="#2B2733">Xuất HĐ điều chỉnh</text>
 <rect x="1044.0" y="2166.0" width="92" height="10" rx="2" fill="#2B2733"/>
 <text x="1144.0" y="2175.0" font-size="10.5" font-style="italic" fill="#5C5566">fork</text>
 <rect x="1009.0" y="2229.0" width="162" height="48" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
@@ -731,76 +736,554 @@ sequenceDiagram
 
   <!-- 07 -->
   <section>
-    <div class="sec-head"><span class="sec-num">07</span><h2>BPMN (dạng lane)</h2></div>
-    <div class="diagram"><pre class="mermaid">
-flowchart TD
-    subgraph L1["Lane: Khách hàng"]
-        S(("Start: Đặt phòng")) --> PX["Màn Pax Info"]
-        PX --> GW{"Tick 'Xuất HĐ' + điền info?"}
-        CT["Liên hệ CS"]
-        SC(("Start: huỷ / điều chỉnh"))
-    end
-    subgraph L2["Lane: Hotel Service"]
-        TICKB["Điền info HĐ tại Pax Info"] --> SAVE["Lưu info HĐ theo booking"]
-        REF["Tính tiền hoàn (gọi Partner)"]
-    end
-    subgraph L3["Lane: CS / CRM"]
-        CSREQ["CS tạo request HĐ (csTicketId)"]
-        SYNC["Cập nhật trạng thái lên CRM"]
-    end
-    subgraph L4["Lane: Platform Service"]
-        VAL["Validate (mandatory, format, TID, chống trùng)"] --> VD{"Hợp lệ?"}
-        VD -->|"Không"| BAD["Báo lỗi cho user"]
-        VD -->|"Có"| TR["Tạo tracking = Init"]
-        TR --> SEND["Gửi request xuất HĐ"]
-        SEND --> RESP{"ERP nhận?"}
-        RESP -->|"Error/Timeout"| ERR["status = Error/Cancel"]
-        RESP -->|"202"| PEND["status = Pending"]
-        FIN["status = Success + push noti"]
-        CANDEC{"Booking huỷ được?"}
-        HIDEC["Ẩn nút Huỷ tại Pocket"]
-        QRY["Query tracking + build HĐ điều chỉnh"]
-        ADONE["status = Success (đã điều chỉnh)"]
-    end
-    subgraph L5["Lane: ERP"]
-        TMR(["⏱ Cron/timer theo lịch"]) --> LST["Tạo danh sách HĐ cần xuất"]
-        LST --> CALL["Call API VACOM"]
-        ADJ["Gửi HĐ điều chỉnh → VACOM"]
-    end
-    subgraph L6["Lane: VACOM"]
-        XU["Xuất HĐ VAT"] --> VR{"Xuất thành công?"}
-        XU2["Xuất HĐ thay thế"]
-    end
-    subgraph L7["Lane: AF Service"]
-        MAIL["Gửi email HĐ VAT"]
-    end
-    GW -->|"[Có tick]"| TICKB
-    GW -->|"[Không tick]"| CT
-    CT --> CSREQ
-    SAVE --> VAL
-    CSREQ --> VAL
-    BAD --> E0(("End"))
-    PEND --> TMR
-    PEND -.->|"sync"| SYNC
-    CALL --> XU
-    VR -->|"Thất bại"| ERR
-    VR -->|"Thành công"| FORK{{"fork — song song"}}
-    FORK --> MAIL
-    FORK --> FIN
-    MAIL --> JOIN{{"join"}}
-    FIN --> JOIN
-    FIN -.->|"sync"| SYNC
-    ERR -.->|"sync"| SYNC
-    JOIN --> E1(("End"))
-    ERR --> E2(("End"))
+    <div class="sec-head"><span class="sec-num">07</span><h2>BPMN — tạo hóa đơn</h2></div>
+    <p class="sec-desc">BPMN chuẩn: mỗi hệ thống là một <b>pool</b> riêng; 2 luồng vào — user tick tại Pax Info (qua Hotel Service/Partner) hoặc <b>liên hệ CS → CRM tạo request (csTicketId)</b>; trao đổi giữa các pool đi bằng <b>message flow</b> (nét đứt); trong một pool là <b>sequence flow</b> (nét liền). Timeout của callback thể hiện bằng <b>timer event</b>. Toàn bộ hình nằm gọn trong khung — <b>click vào hình để phóng to 100%</b>, click lần nữa / Esc để đóng.</p>
+    <div class="diagram zoomable" title="Click để phóng to">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2360 1650" width="100%" style="height:auto;display:block;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif">
+<defs>
+<marker id="sfBA" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#5C5566"/></marker>
+<marker id="mfBA" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#6B5CA5" stroke-width="1.3"/></marker>
+</defs>
+<rect x="12" y="40" width="2336" height="200" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="40" width="34" height="200" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="140.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 140.0)">Khách hàng</text>
+<rect x="12" y="260" width="2336" height="130" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="260" width="34" height="130" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="325.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 325.0)">CS / CRM</text>
+<rect x="12" y="410" width="2336" height="150" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="410" width="34" height="150" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="485.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 485.0)">Hotel Service</text>
+<rect x="12" y="580" width="2336" height="130" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="580" width="34" height="130" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="645.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 645.0)">Partner</text>
+<rect x="12" y="730" width="2336" height="330" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="730" width="34" height="330" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="895.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 895.0)">Platform Service</text>
+<rect x="12" y="1080" width="2336" height="230" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="1080" width="34" height="230" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="1195.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 1195.0)">ERP</text>
+<rect x="12" y="1330" width="2336" height="130" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="1330" width="34" height="130" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="1395.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 1395.0)">VACOM</text>
+<rect x="12" y="1480" width="2336" height="130" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="1480" width="34" height="130" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="1545.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 1545.0)">AF Service</text>
+<circle cx="120" cy="100" r="17" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="120" y="134.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Bắt đầu</text>
+<rect x="195.0" y="74.0" width="150" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="270" y="97.125" text-anchor="middle" font-size="11" fill="#2B2733">Đặt phòng +</text>
+<text x="270" y="110.875" text-anchor="middle" font-size="11" fill="#2B2733">thanh toán</text>
+<polygon points="420,74 446,100 420,126 394,100" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="420" y="105.0" text-anchor="middle" font-size="15" font-weight="600" fill="#2B2733">X</text>
+<text x="420" y="60.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Tick xuất HĐ?</text>
+<rect x="490.0" y="74.0" width="170" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="575" y="97.125" text-anchor="middle" font-size="11" fill="#2B2733">Tick + điền info HĐ</text>
+<text x="575" y="110.875" text-anchor="middle" font-size="11" fill="#2B2733">tại Pax Info</text>
+<rect x="480.0" y="144.0" width="190" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="575" y="167.125" text-anchor="middle" font-size="11" fill="#2B2733">Liên hệ CS</text>
+<text x="575" y="180.875" text-anchor="middle" font-size="11" fill="#2B2733">yêu cầu xuất HĐ</text>
+<circle cx="790" cy="100" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="790" cy="100" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="790" y="104.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="790" y="131.4375" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận notification</text>
+<text x="790" y="144.5625" text-anchor="middle" font-size="10.5" fill="#5C5566">/ email HĐ</text>
+<circle cx="930" cy="100" r="17" fill="#F5EEE1" stroke="#2B2733" stroke-width="3.4"/>
+<text x="930" y="134.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Kết thúc</text>
+<polyline points="137.0,100 195.0,100" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="345.0,100 394.0,100" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="446.0,100 490.0,100" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<text x="468.0" y="92.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Có</text>
+<polyline points="807.0,100 913.0,100" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="420,126 420,170 480,170" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<text x="436.0" y="132.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Không</text>
+<polyline points="575,126 575,430 505,430 505,468" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="575" cy="126" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="700" y="420.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Submit booking + info HĐ</text>
+<polyline points="575,196 575,250 660,250 660,308" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="575" cy="196" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="700" y="240.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Yêu cầu xuất HĐ qua CS</text>
+<circle cx="660" cy="325" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="660" cy="325" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="660" y="329.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="660" y="359.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận yêu cầu</text>
+<rect x="735.0" y="299.0" width="160" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="815" y="322.125" text-anchor="middle" font-size="11" fill="#2B2733">CS nhập info HĐ</text>
+<text x="815" y="335.875" text-anchor="middle" font-size="11" fill="#2B2733">vào CRM</text>
+<rect x="940.0" y="299.0" width="180" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1030" y="322.125" text-anchor="middle" font-size="11" fill="#2B2733">CRM tạo request HĐ</text>
+<text x="1030" y="335.875" text-anchor="middle" font-size="11" fill="#2B2733">(csTicketId)</text>
+<polyline points="677.0,325 735.0,325" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="895.0,325 940.0,325" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<circle cx="1700" cy="325" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1700" cy="325" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1700" y="329.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="1700" y="359.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận sync status</text>
+<rect x="1775.0" y="299.0" width="170" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1860" y="322.125" text-anchor="middle" font-size="11" fill="#2B2733">Cập nhật trạng thái</text>
+<text x="1860" y="335.875" text-anchor="middle" font-size="11" fill="#2B2733">HĐ trên CRM</text>
+<circle cx="2010" cy="325" r="17" fill="#F5EEE1" stroke="#2B2733" stroke-width="3.4"/>
+<polyline points="1717.0,325 1775.0,325" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1945.0,325 1993.0,325" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1120,325 1180,325 1180,780 512,780 512,833" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="1120" cy="325" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1268" y="570.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Request xuất HĐ từ CRM</text>
+<circle cx="505" cy="485" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="505" cy="485" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="505" y="489.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="505" y="519.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận booking</text>
+<rect x="585.0" y="459.0" width="150" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="660" y="482.125" text-anchor="middle" font-size="11" fill="#2B2733">Call Partner</text>
+<text x="660" y="495.875" text-anchor="middle" font-size="11" fill="#2B2733">đặt phòng</text>
+<circle cx="810" cy="485" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="810" cy="485" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="810" y="489.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="810" y="516.4375" text-anchor="middle" font-size="10.5" fill="#5C5566">Partner</text>
+<text x="810" y="529.5625" text-anchor="middle" font-size="10.5" fill="#5C5566">success</text>
+<rect x="890.0" y="459.0" width="190" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="985" y="482.125" text-anchor="middle" font-size="11" fill="#2B2733">Lưu transaction +</text>
+<text x="985" y="495.875" text-anchor="middle" font-size="11" fill="#2B2733">info HĐ vào Platform</text>
+<polyline points="522.0,485 585.0,485" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="735.0,485 793.0,485" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="827.0,485 890.0,485" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="660,511 660,628" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="660" cy="511" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="724.0" y="561.5" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Request booking</text>
+<circle cx="660" cy="645" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="660" cy="645" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="660" y="649.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="660" y="679.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận request</text>
+<rect x="745.0" y="619.0" width="170" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="830" y="642.125" text-anchor="middle" font-size="11" fill="#2B2733">Xử lý booking,</text>
+<text x="830" y="655.875" text-anchor="middle" font-size="11" fill="#2B2733">trả kết quả</text>
+<polyline points="677.0,645 745.0,645" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="810,619 810,502" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="810" cy="619" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="765.0" y="552.5" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Success</text>
+<polyline points="985,511 985,765 498,765 498,833" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="985" cy="511" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="740" y="753.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Lưu transaction + request xuất HĐ</text>
+<circle cx="505" cy="850" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="505" cy="850" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="505" y="854.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="505" y="884.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận request</text>
+<rect x="580.0" y="824.0" width="130" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="645" y="854.0" text-anchor="middle" font-size="11" fill="#2B2733">Validate BE</text>
+<polygon points="775,824 801,850 775,876 749,850" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="775" y="855.0" text-anchor="middle" font-size="15" font-weight="600" fill="#2B2733">X</text>
+<text x="838" y="818.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Hợp lệ?</text>
+<rect x="655.0" y="954.0" width="180" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="745" y="977.125" text-anchor="middle" font-size="11" fill="#2B2733">Báo lỗi user +</text>
+<text x="745" y="990.875" text-anchor="middle" font-size="11" fill="#2B2733">sync Error về CRM</text>
+<circle cx="920" cy="980" r="17" fill="#F5EEE1" stroke="#2B2733" stroke-width="3.4"/>
+<text x="920" y="1014.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Dừng — không hợp lệ</text>
+<rect x="850.0" y="824.0" width="170" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="935" y="854.0" text-anchor="middle" font-size="11" fill="#2B2733">Tạo tracking = Init</text>
+<rect x="1070.0" y="824.0" width="170" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1155" y="854.0" text-anchor="middle" font-size="11" fill="#2B2733">Gửi request xuất HĐ</text>
+<circle cx="1330" cy="850" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1330" cy="850" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1330" y="854.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="1330" y="881.4375" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận 202</text>
+<text x="1330" y="894.5625" text-anchor="middle" font-size="10.5" fill="#5C5566">Accepted</text>
+<rect x="1390.0" y="824.0" width="160" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1470" y="847.125" text-anchor="middle" font-size="11" fill="#2B2733">status = Pending</text>
+<text x="1470" y="860.875" text-anchor="middle" font-size="11" fill="#2B2733">+ sync CRM</text>
+<circle cx="1620" cy="850" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1620" cy="850" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1620" y="854.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="1620" y="884.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Chờ callback</text>
+<circle cx="1560" cy="980" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1560" cy="980" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1560" y="984.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">T</text>
+<text x="1560" y="1014.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Timeout</text>
+<polygon points="1730,824 1756,850 1730,876 1704,850" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="1730" y="855.0" text-anchor="middle" font-size="15" font-weight="600" fill="#2B2733">X</text>
+<text x="1730" y="810.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Kết quả?</text>
+<rect x="1775.0" y="824.0" width="170" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1860" y="847.125" text-anchor="middle" font-size="11" fill="#2B2733">status = Success</text>
+<text x="1860" y="860.875" text-anchor="middle" font-size="11" fill="#2B2733">+ sync CRM</text>
+<rect x="1995.0" y="824.0" width="150" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="2070" y="854.0" text-anchor="middle" font-size="11" fill="#2B2733">Push notification</text>
+<circle cx="2230" cy="850" r="17" fill="#F5EEE1" stroke="#2B2733" stroke-width="3.4"/>
+<text x="2230" y="884.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Kết thúc</text>
+<rect x="1805.0" y="954.0" width="190" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1900" y="977.125" text-anchor="middle" font-size="11" fill="#2B2733">status = Error/Cancel</text>
+<text x="1900" y="990.875" text-anchor="middle" font-size="11" fill="#2B2733">+ sync CRM</text>
+<circle cx="2090" cy="980" r="17" fill="#F5EEE1" stroke="#2B2733" stroke-width="3.4"/>
+<text x="2090" y="1014.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Dừng — lỗi</text>
+<polyline points="522.0,850 580.0,850" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="710.0,850 749.0,850" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="775,876 775,954" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<text x="775.0" y="907.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Không</text>
+<polyline points="835.0,980 903.0,980" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="801.0,850 850.0,850" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<text x="825.5" y="842.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Có</text>
+<polyline points="1020.0,850 1070.0,850" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1240.0,850 1313.0,850" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1347.0,850 1390.0,850" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1550.0,850 1603.0,850" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1637.0,850 1704.0,850" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1756.0,850 1775.0,850" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<text x="1765.5" y="842.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Success</text>
+<polyline points="1945.0,850 1995.0,850" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="2145.0,850 2213.0,850" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1730,876 1730,980 1805,980" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<text x="1727.5" y="868.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Error</text>
+<polyline points="1577,980 1730,980" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1995.0,980 2073.0,980" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1155,876 1155,1153" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="1155" cy="876" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1213.0" y="1006.5" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Request tạo HĐ</text>
+<polyline points="830,954 830,400 1688,400 1688,342" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="830" cy="954" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<polyline points="1470,824 1470,400 1694,400 1694,342" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="1470" cy="824" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<polyline points="1860,824 1860,400 1700,400 1700,342" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="1860" cy="824" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<polyline points="1970,954 1970,400 1706,400 1706,342" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="1970" cy="954" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1150" y="388.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Sync trạng thái HĐ về CRM (Error / Pending / Success)</text>
+<polyline points="2070,824 2070,250 790,250 790,83" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="2070" cy="824" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1430" y="240.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Push noti / kết quả</text>
+<circle cx="1155" cy="1170" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1155" cy="1170" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1155" y="1174.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="1155" y="1204.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận request</text>
+<rect x="1220.0" y="1144.0" width="140" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1290" y="1174.0" text-anchor="middle" font-size="11" fill="#2B2733">Trả 202 Accepted</text>
+<circle cx="1450" cy="1170" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1450" cy="1170" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1450" y="1174.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">T</text>
+<text x="1450" y="1201.4375" text-anchor="middle" font-size="10.5" fill="#5C5566">Cron theo lịch</text>
+<text x="1450" y="1214.5625" text-anchor="middle" font-size="10.5" fill="#5C5566">(batch)</text>
+<rect x="1520.0" y="1144.0" width="150" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1595" y="1167.125" text-anchor="middle" font-size="11" fill="#2B2733">Tạo danh sách</text>
+<text x="1595" y="1180.875" text-anchor="middle" font-size="11" fill="#2B2733">HĐ cần xuất</text>
+<rect x="1705.0" y="1144.0" width="140" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1775" y="1174.0" text-anchor="middle" font-size="11" fill="#2B2733">Call API VACOM</text>
+<circle cx="1920" cy="1170" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1920" cy="1170" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1920" y="1174.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="1920" y="1201.4375" text-anchor="middle" font-size="10.5" fill="#5C5566">Kết quả</text>
+<text x="1920" y="1214.5625" text-anchor="middle" font-size="10.5" fill="#5C5566">VACOM</text>
+<polygon points="2020,1144 2046,1170 2020,1196 1994,1170" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="2020" y="1175.0" text-anchor="middle" font-size="15" font-weight="600" fill="#2B2733">X</text>
+<text x="2020" y="1130.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Thành công?</text>
+<polygon points="2100,1144 2126,1170 2100,1196 2074,1170" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="2100" y="1175.0" text-anchor="middle" font-size="15" font-weight="600" fill="#2B2733">+</text>
+<rect x="2155.0" y="1115.0" width="150" height="40" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="2230" y="1139.0" text-anchor="middle" font-size="11" fill="#2B2733">Callback success</text>
+<rect x="2145.0" y="1190.0" width="170" height="40" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="2230" y="1214.0" text-anchor="middle" font-size="11" fill="#2B2733">Request AF gửi mail</text>
+<rect x="1950.0" y="1246.0" width="140" height="38" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="2020" y="1269.0" text-anchor="middle" font-size="11" fill="#2B2733">Callback fail</text>
+<polyline points="1172.0,1170 1220.0,1170" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1360,1170 1425,1170" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1467.0,1170 1520.0,1170" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1670.0,1170 1705.0,1170" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1845.0,1170 1903.0,1170" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1937.0,1170 1994.0,1170" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="2046,1170 2074,1170" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<text x="2060.0" y="1160.0" text-anchor="middle" font-size="10.5" fill="#5C5566">OK</text>
+<polyline points="2100,1144 2100,1135 2155,1135" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="2100,1196 2100,1210 2145,1210" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="2020,1196 2020,1246" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<text x="2038.0" y="1213.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Fail</text>
+<polyline points="1330,1144 1330,867" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="1330" cy="1144" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1354.0" y="997.5" text-anchor="middle" font-size="10.5" fill="#6B5CA5">202</text>
+<polyline points="2230,1115 2230,1065 1612,1065 1612,869" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="2230" cy="1115" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1900" y="1053.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Callback success</text>
+<polyline points="1950,1265 1633,1265 1633,869" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="1950" cy="1265" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1790" y="1253.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Callback fail</text>
+<polyline points="1775,1196 1775,1378" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="1775" cy="1196" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1825.0" y="1279.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Xuất HĐ VAT</text>
+<circle cx="1775" cy="1395" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1775" cy="1395" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1775" y="1399.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="1775" y="1429.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận request</text>
+<rect x="1845.0" y="1369.0" width="150" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1920" y="1392.125" text-anchor="middle" font-size="11" fill="#2B2733">Xuất HĐ VAT</text>
+<text x="1920" y="1405.875" text-anchor="middle" font-size="11" fill="#2B2733">qua VACOM</text>
+<polyline points="1792.0,1395 1845.0,1395" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="1920,1369 1920,1187" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="1920" cy="1369" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1882.0" y="1270.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Kết quả</text>
+<circle cx="2000" cy="1545" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="2000" cy="1545" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="2000" y="1549.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="2000" y="1579.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận request</text>
+<rect x="2075.0" y="1519.0" width="170" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="2160" y="1542.125" text-anchor="middle" font-size="11" fill="#2B2733">Gửi email HĐ VAT</text>
+<text x="2160" y="1555.875" text-anchor="middle" font-size="11" fill="#2B2733">cho user</text>
+<circle cx="2300" cy="1545" r="17" fill="#F5EEE1" stroke="#2B2733" stroke-width="3.4"/>
+<polyline points="2017.0,1545 2075.0,1545" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="2245.0,1545 2283.0,1545" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBA)"/>
+<polyline points="2270,1230 2270,1470 2000,1470 2000,1528" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBA)"/>
+<circle cx="2270" cy="1230" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="2135.0" y="1393.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Request mail</text>
+</svg>
+    </div>
+    <p class="legend"><b>Ký hiệu BPMN:</b> vòng tròn viền mảnh = start event · viền đậm = end event · vòng tròn đôi <code>M</code>/<code>T</code> = intermediate event (message / timer) · thoi <code>X</code> = exclusive gateway (rẽ nhánh) · thoi <code>+</code> = parallel gateway (song song) · nét liền = sequence flow (trong 1 pool) · <span style="color:#6B5CA5">nét đứt tím</span> = message flow (giữa 2 pool).</p>
+  </section>
 
-    SC --> CANDEC
-    CANDEC -->|"[Không huỷ được]"| HIDEC --> EH(("End"))
-    CANDEC -->|"[Huỷ được]"| REF
-    REF --> QRY --> ADJ --> XU2 --> ADONE
-    ADONE -.->|"sync"| SYNC
-    ADONE --> E3(("End"))
-    </pre></div>
+  <!-- 07b -->
+  <section>
+    <div class="sec-head"><span class="sec-num">07b</span><h2>BPMN — huỷ / điều chỉnh</h2></div>
+    <p class="sec-desc"><b>Mỗi lần huỷ = 1 HĐ điều chỉnh riêng, đi FULL luồng phát hành</b> (build → gửi ERP → 202 Pending → cron batch → VACOM → callback) — không mark cancel ở Init/Pending. Chỉ rẽ Partial / Full khi build; ERP callback kết quả về Platform qua message flow; mọi thay đổi trạng thái <b>sync về CRM</b> (pool CRM). <b>Click vào hình để phóng to 100%</b>, click lần nữa / Esc để đóng.</p>
+    <div class="diagram zoomable" title="Click để phóng to">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 1640" width="100%" style="height:auto;display:block;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif">
+<defs>
+<marker id="sfBB" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#5C5566"/></marker>
+<marker id="mfBB" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#6B5CA5" stroke-width="1.3"/></marker>
+</defs>
+<rect x="12" y="40" width="2376" height="140" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="40" width="34" height="140" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="110.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 110.0)">Khách hàng</text>
+<rect x="12" y="200" width="2376" height="130" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="200" width="34" height="130" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="265.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 265.0)">CRM</text>
+<rect x="12" y="350" width="2376" height="380" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="350" width="34" height="380" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="540.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 540.0)">Platform Service</text>
+<rect x="12" y="750" width="2376" height="150" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="750" width="34" height="150" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="825.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 825.0)">Hotel Service</text>
+<rect x="12" y="920" width="2376" height="130" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="920" width="34" height="130" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="985.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 985.0)">Partner</text>
+<rect x="12" y="1070" width="2376" height="230" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="1070" width="34" height="230" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="1185.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 1185.0)">ERP</text>
+<rect x="12" y="1320" width="2376" height="130" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="1320" width="34" height="130" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="1385.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 1385.0)">VACOM</text>
+<rect x="12" y="1470" width="2376" height="130" fill="#FFFFFF" stroke="#E4DFD4" stroke-width="1"/>
+<rect x="12" y="1470" width="34" height="130" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1"/>
+<text x="33" y="1535.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2B2733" transform="rotate(-90 33 1535.0)">AF Service</text>
+<circle cx="120" cy="105" r="17" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="120" y="139.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Bắt đầu</text>
+<rect x="190.0" y="79.0" width="200" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="290" y="102.125" text-anchor="middle" font-size="11" fill="#2B2733">Bấm Huỷ booking</text>
+<text x="290" y="115.875" text-anchor="middle" font-size="11" fill="#2B2733">(1 phòng / toàn bộ)</text>
+<circle cx="2150" cy="105" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="2150" cy="105" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="2150" y="109.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="2150" y="139.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Push notification</text>
+<circle cx="2290" cy="105" r="17" fill="#F5EEE1" stroke="#2B2733" stroke-width="3.4"/>
+<text x="2290" y="139.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Kết thúc</text>
+<polyline points="137.0,105 190.0,105" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="2167.0,105 2273.0,105" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="290,131 290,423" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="290" cy="131" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="338.0" y="269.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Yêu cầu huỷ</text>
+<circle cx="1450" cy="265" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1450" cy="265" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1450" y="269.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="1450" y="299.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận sync status</text>
+<rect x="1530.0" y="239.0" width="180" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1620" y="262.125" text-anchor="middle" font-size="11" fill="#2B2733">Cập nhật trạng thái</text>
+<text x="1620" y="275.875" text-anchor="middle" font-size="11" fill="#2B2733">HĐ trên CRM</text>
+<circle cx="1780" cy="265" r="17" fill="#F5EEE1" stroke="#2B2733" stroke-width="3.4"/>
+<polyline points="1467.0,265 1530.0,265" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="1710.0,265 1763.0,265" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<circle cx="290" cy="440" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="290" cy="440" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="290" y="444.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="290" y="474.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận yêu cầu huỷ</text>
+<rect x="355.0" y="414.0" width="150" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="430" y="444.0" text-anchor="middle" font-size="11" fill="#2B2733">Call Hotel Service</text>
+<circle cx="590" cy="440" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="590" cy="440" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="590" y="444.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="590" y="471.4375" text-anchor="middle" font-size="10.5" fill="#5C5566">Info huỷ +</text>
+<text x="590" y="484.5625" text-anchor="middle" font-size="10.5" fill="#5C5566">tiền hoàn</text>
+<rect x="665.0" y="414.0" width="150" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="740" y="437.125" text-anchor="middle" font-size="11" fill="#2B2733">Query tracking</text>
+<text x="740" y="450.875" text-anchor="middle" font-size="11" fill="#2B2733">theo Tid</text>
+<polygon points="900,414 926,440 900,466 874,440" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="900" y="445.0" text-anchor="middle" font-size="15" font-weight="600" fill="#2B2733">X</text>
+<text x="900" y="387.4375" text-anchor="middle" font-size="10.5" fill="#5C5566">Có HĐ theo</text>
+<text x="900" y="400.5625" text-anchor="middle" font-size="10.5" fill="#5C5566">Tid?</text>
+<circle cx="1040" cy="440" r="17" fill="#F5EEE1" stroke="#2B2733" stroke-width="3.4"/>
+<text x="1040" y="474.0" text-anchor="middle" font-size="10.5" fill="#5C5566">No-op — dừng</text>
+<polygon points="1000,564 1026,590 1000,616 974,590" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="1000" y="595.0" text-anchor="middle" font-size="15" font-weight="600" fill="#2B2733">X</text>
+<text x="918" y="623.4375" text-anchor="middle" font-size="10.5" fill="#5C5566">Partial /</text>
+<text x="918" y="636.5625" text-anchor="middle" font-size="10.5" fill="#5C5566">Full?</text>
+<rect x="1090.0" y="517.0" width="200" height="46" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1190" y="537.125" text-anchor="middle" font-size="11" fill="#2B2733">Build HĐ ĐC phần huỷ</text>
+<text x="1190" y="550.875" text-anchor="middle" font-size="11" fill="#2B2733">+ giữ HĐ gốc</text>
+<rect x="1090.0" y="617.0" width="200" height="46" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1190" y="637.125" text-anchor="middle" font-size="11" fill="#2B2733">Build HĐ ĐC = 0</text>
+<text x="1190" y="650.875" text-anchor="middle" font-size="11" fill="#2B2733">+ kèm HĐ gốc</text>
+<polygon points="1350,564 1376,590 1350,616 1324,590" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="1350" y="595.0" text-anchor="middle" font-size="15" font-weight="600" fill="#2B2733">X</text>
+<rect x="1400.0" y="564.0" width="140" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1470" y="587.125" text-anchor="middle" font-size="11" fill="#2B2733">Gửi HĐ ĐC</text>
+<text x="1470" y="600.875" text-anchor="middle" font-size="11" fill="#2B2733">đến ERP</text>
+<circle cx="1620" cy="590" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1620" cy="590" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1620" y="594.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="1620" y="624.0" text-anchor="middle" font-size="10.5" fill="#5C5566">202</text>
+<rect x="1680.0" y="564.0" width="160" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1760" y="587.125" text-anchor="middle" font-size="11" fill="#2B2733">status = Pending</text>
+<text x="1760" y="600.875" text-anchor="middle" font-size="11" fill="#2B2733">+ sync CRM</text>
+<circle cx="1910" cy="590" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1910" cy="590" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1910" y="594.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="1910" y="624.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Chờ callback</text>
+<polygon points="2010,564 2036,590 2010,616 1984,590" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="2010" y="595.0" text-anchor="middle" font-size="15" font-weight="600" fill="#2B2733">X</text>
+<text x="2010" y="550.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Kết quả?</text>
+<rect x="2070.0" y="564.0" width="180" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="2160" y="587.125" text-anchor="middle" font-size="11" fill="#2B2733">status = Success</text>
+<text x="2160" y="600.875" text-anchor="middle" font-size="11" fill="#2B2733">+ sync CRM</text>
+<circle cx="2330" cy="590" r="17" fill="#F5EEE1" stroke="#2B2733" stroke-width="3.4"/>
+<text x="2330" y="624.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Kết thúc</text>
+<rect x="1955.0" y="658.0" width="230" height="44" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="2070" y="677.125" text-anchor="middle" font-size="11" fill="#2B2733">status = Error — giữ record,</text>
+<text x="2070" y="690.875" text-anchor="middle" font-size="11" fill="#2B2733">retry đến khi Success</text>
+<circle cx="2330" cy="680" r="17" fill="#F5EEE1" stroke="#2B2733" stroke-width="3.4"/>
+<polyline points="307.0,440 355.0,440" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="505.0,440 573.0,440" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="607.0,440 665.0,440" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="815.0,440 874.0,440" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="926,440 1023,440" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<text x="975" y="418.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Not found</text>
+<polyline points="900,466 900,590 974,590" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<text x="929.0" y="485.4375" text-anchor="middle" font-size="10.5" fill="#5C5566">Có — mỗi lần huỷ</text>
+<text x="929.0" y="498.5625" text-anchor="middle" font-size="10.5" fill="#5C5566">= 1 HĐ ĐC đi full luồng</text>
+<polyline points="1000,564 1000,540 1090,540" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<text x="1055.0" y="542.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Partial</text>
+<polyline points="1000,616 1000,640 1090,640" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<text x="1055.0" y="644.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Full</text>
+<polyline points="1290,540 1350,540 1350,564" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="1290,640 1350,640 1350,616" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="1376.0,590 1400.0,590" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="1637.0,590 1680.0,590" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="1840.0,590 1893.0,590" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="1927.0,590 1984.0,590" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="2036.0,590 2070.0,590" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<text x="2053.0" y="582.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Success</text>
+<polyline points="2250.0,590 2313.0,590" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="2010,616 2010,658" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<text x="2026.0" y="629.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Fail</text>
+<polyline points="2185.0,680 2313.0,680" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="2160,564 2160,170 2150,170 2150,88" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="2160" cy="564" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="2065" y="190.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Push notification</text>
+<polyline points="1700,564 1700,340 1448,340 1448,282" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="1700" cy="564" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<polyline points="2100,564 2100,340 1454,340 1454,282" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="2100" cy="564" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<polyline points="1980,658 1980,340 1460,340 1460,282" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="1980" cy="658" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1050" y="330.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Sync trạng thái (Pending / Success / Error) về CRM</text>
+<polyline points="430,466 430,808" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="430" cy="466" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="476.0" y="629.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Request huỷ</text>
+<polyline points="1470,616 1470,1113" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="1470" cy="616" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1536.0" y="856.5" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Gửi HĐ điều chỉnh</text>
+<circle cx="430" cy="825" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="430" cy="825" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="430" y="829.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="430" y="859.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận yêu cầu</text>
+<rect x="505.0" y="799.0" width="110" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="560" y="829.0" text-anchor="middle" font-size="11" fill="#2B2733">Gọi Partner</text>
+<circle cx="770" cy="825" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="770" cy="825" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="770" y="829.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="770" y="859.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Số tiền charge</text>
+<rect x="845.0" y="799.0" width="130" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="910" y="829.0" text-anchor="middle" font-size="11" fill="#2B2733">Tính tiền hoàn</text>
+<polyline points="447.0,825 505.0,825" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="787.0,825 845.0,825" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="910,799 910,740 590,740 590,457" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="910" cy="799" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="750" y="726.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Info huỷ + tiền hoàn</text>
+<polyline points="560,851 560,968" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="560" cy="851" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="632.0" y="901.5" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Request huỷ phòng</text>
+<circle cx="560" cy="985" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="560" cy="985" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="560" y="989.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="560" y="1019.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận request</text>
+<rect x="625.0" y="959.0" width="150" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="700" y="989.0" text-anchor="middle" font-size="11" fill="#2B2733">Trả số tiền charge</text>
+<polyline points="577.0,985 625.0,985" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="700,959 700,890 770,890 770,842" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="700" cy="959" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="735.0" y="914.5" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Số tiền charge</text>
+<circle cx="1470" cy="1150" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1470" cy="1150" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1470" y="1154.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="1470" y="1184.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận HĐ ĐC</text>
+<rect x="1550.0" y="1124.0" width="100" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1600" y="1154.0" text-anchor="middle" font-size="11" fill="#2B2733">Trả 202</text>
+<circle cx="1720" cy="1150" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1720" cy="1150" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1720" y="1154.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">T</text>
+<text x="1720" y="1184.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Cron theo lịch</text>
+<rect x="1790.0" y="1124.0" width="140" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="1860" y="1147.125" text-anchor="middle" font-size="11" fill="#2B2733">Xuất HĐ ĐC</text>
+<text x="1860" y="1160.875" text-anchor="middle" font-size="11" fill="#2B2733">qua VACOM</text>
+<circle cx="2010" cy="1150" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="2010" cy="1150" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="2010" y="1154.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="2010" y="1184.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Kết quả</text>
+<polygon points="2090,1124 2116,1150 2090,1176 2064,1150" fill="#F5EEE1" stroke="#C8A97E" stroke-width="1.6"/>
+<text x="2090" y="1155.0" text-anchor="middle" font-size="15" font-weight="600" fill="#2B2733">+</text>
+<rect x="2130.0" y="1095.0" width="180" height="40" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="2220" y="1119.0" text-anchor="middle" font-size="11" fill="#2B2733">Callback về Platform</text>
+<rect x="2130.0" y="1170.0" width="180" height="40" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="2220" y="1194.0" text-anchor="middle" font-size="11" fill="#2B2733">Request AF gửi mail</text>
+<polyline points="1487.0,1150 1550.0,1150" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="1650,1150 1695,1150" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="1737.0,1150 1790.0,1150" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="1930.0,1150 1993.0,1150" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="2027.0,1150 2064.0,1150" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="2090,1124 2090,1115 2130,1115" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="2090,1176 2090,1190 2130,1190" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="1620,1124 1620,607" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="1620" cy="1124" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1642.0" y="857.5" text-anchor="middle" font-size="10.5" fill="#6B5CA5">202</text>
+<polyline points="2260,1095 2260,645 1910,645 1910,607" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="2260" cy="1095" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="2180" y="633.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Callback kết quả</text>
+<polyline points="1860,1176 1860,1368" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="1860" cy="1176" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1910.0" y="1264.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Xuất HĐ ĐC</text>
+<circle cx="1860" cy="1385" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="1860" cy="1385" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="1860" y="1389.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="1860" y="1419.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận request</text>
+<rect x="1920.0" y="1359.0" width="160" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="2000" y="1389.0" text-anchor="middle" font-size="11" fill="#2B2733">Xuất HĐ điều chỉnh</text>
+<polyline points="1877.0,1385 1920.0,1385" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="2010,1359 2010,1167" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="2010" cy="1359" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="1972.0" y="1255.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Kết quả</text>
+<circle cx="2020" cy="1535" r="17" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.4"/>
+<circle cx="2020" cy="1535" r="12.5" fill="none" stroke="#6B5CA5" stroke-width="1.4"/>
+<text x="2020" y="1539.0" text-anchor="middle" font-size="11" font-weight="600" fill="#6B5CA5">M</text>
+<text x="2020" y="1569.0" text-anchor="middle" font-size="10.5" fill="#5C5566">Nhận request</text>
+<rect x="2080.0" y="1509.0" width="180" height="52" rx="9" fill="#EFEBF8" stroke="#6B5CA5" stroke-width="1.6"/>
+<text x="2170" y="1539.0" text-anchor="middle" font-size="11" fill="#2B2733">Gửi mail HĐ điều chỉnh</text>
+<circle cx="2320" cy="1535" r="17" fill="#F5EEE1" stroke="#2B2733" stroke-width="3.4"/>
+<polyline points="2037.0,1535 2080.0,1535" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="2260.0,1535 2303.0,1535" fill="none" stroke="#5C5566" stroke-width="1.4" marker-end="url(#sfBB)"/>
+<polyline points="2270,1210 2270,1460 2020,1460 2020,1518" fill="none" stroke="#6B5CA5" stroke-width="1.4" stroke-dasharray="7 5" marker-end="url(#mfBB)"/>
+<circle cx="2270" cy="1210" r="4" fill="#FFFFFF" stroke="#6B5CA5" stroke-width="1.3"/>
+<text x="2145.0" y="1378.0" text-anchor="middle" font-size="10.5" fill="#6B5CA5">Request mail</text>
+</svg>
+    </div>
+    <p class="legend"><b>Ký hiệu BPMN:</b> vòng tròn viền mảnh = start event · viền đậm = end event · vòng tròn đôi <code>M</code>/<code>T</code> = intermediate event (message / timer) · thoi <code>X</code> = exclusive gateway (rẽ nhánh) · thoi <code>+</code> = parallel gateway (song song) · nét liền = sequence flow (trong 1 pool) · <span style="color:#6B5CA5">nét đứt tím</span> = message flow (giữa 2 pool).</p>
   </section>
 
   <!-- 08 -->
@@ -844,6 +1327,30 @@ flowchart TD
     },
     flowchart: { htmlLabels: true },
     sequence: { actorMargin: 40, mirrorActors: true }
+  });
+</script>
+<script>
+  document.querySelectorAll('.zoomable').forEach(function (d) {
+    d.addEventListener('click', function () {
+      var ov = document.createElement('div');
+      ov.className = 'zoom-overlay';
+      var svg = d.querySelector('svg').cloneNode(true);
+      svg.setAttribute('width', svg.viewBox.baseVal.width);
+      svg.style.height = 'auto';
+      ov.appendChild(svg);
+      var hint = document.createElement('div');
+      hint.className = 'zoom-hint';
+      hint.textContent = 'Click / Esc để đóng — cuộn để xem';
+      ov.appendChild(hint);
+      function close() {
+        ov.remove();
+        document.removeEventListener('keydown', onKey);
+      }
+      function onKey(e) { if (e.key === 'Escape') close(); }
+      ov.addEventListener('click', close);
+      document.addEventListener('keydown', onKey);
+      document.body.appendChild(ov);
+    });
   });
 </script>
 </body>
