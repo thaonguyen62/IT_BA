@@ -63,6 +63,40 @@
     padding: 10px 16px;
     border-radius: 0 6px 6px 0;
   }
+  .ctxlist {
+    margin: 0;
+    padding: 14px 18px 14px 34px;
+    border-left: 3px solid var(--tan);
+    background: var(--tan-soft);
+    border-radius: 0 6px 6px 0;
+    max-width: 78ch;
+  }
+  .ctxlist li { color: var(--ink-soft); font-size: 15px; line-height: 1.55; margin: 6px 0; }
+  .ctxlist b { color: var(--ink); }
+  .doclist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .doclist li {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--purple);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    background: #FFFFFF;
+  }
+  .doclist .doc-name { font-weight: 600; color: var(--ink); }
+  .doclist a {
+    color: var(--purple);
+    word-break: break-all;
+    font-family: var(--mono);
+    font-size: 13px;
+    text-decoration: none;
+  }
+  .doclist a:hover { text-decoration: underline; }
   .diagram {
     background: #FFFFFF;
     border: 1px solid var(--border);
@@ -103,6 +137,16 @@
     <div class="eyebrow">INVOICE LIFECYCLE — HOTEL BOOKING</div>
     <h1>Tạo &amp; điều chỉnh hóa đơn</h1>
   </header>
+
+    <!-- 00 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">00</span><h2>Context</h2></div>
+    <ul class="ctxlist">
+      <li><b>Expedia:</b> MoMo là <b>forwarder</b> (trung gian) — không trực tiếp quyết định giá bán, nên không phải bên xuất HĐ.</li>
+      <li><b>OMH:</b> MoMo trực tiếp quyết định giá bán vì nhận <b>giá B2B</b> rồi cộng <b>markup</b> → MoMo là bên bán (principal) → phải xuất HĐ.</li>
+      <li><b>Song song:</b> luồng xuất HĐ bên <b>Platform (B2C)</b> đã và đang triển khai; phần này chỉ implement việc <b>truyền thông tin HĐ</b> sang cho Platform.</li>
+    </ul>
+  </section>
 
     <!-- 01 -->
   <section>
@@ -150,7 +194,6 @@ mindmap
   <!-- 02 -->
   <section>
     <div class="sec-head"><span class="sec-num">02</span><h2>Use case</h2></div>
-    <div class="sec-desc"><b>Primary actor:</b> Khách hàng, Nhân viên CS. <b>Secondary (system):</b> CRM (Mobio) — nhận status &amp; ticket; ERP · VACOM (đối tác xuất HĐ) · AF (email). <b>«extend» [tick + điền info]</b>: user chỉ điền info HĐ lúc booking nếu tick checkbox "Xuất HĐ" tại màn <b>Pax Info</b>; không tick → <b>Tạo yêu cầu HĐ qua CS</b>. Các use case đều <code>«include»</code> Phát hành hóa đơn (ERP → VACOM). CRM nối "Xem trạng thái" &amp; "Tạo yêu cầu qua CS".</div>
     <div class="diagram">
     <svg viewBox="0 0 900 660" width="100%" style="max-width:900px;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif">
   <defs>
@@ -232,7 +275,6 @@ mindmap
   <!-- 03 -->
   <section>
     <div class="sec-head"><span class="sec-num">03</span><h2>Sequence — tạo hóa đơn</h2></div>
-    <div class="sec-desc">Rẽ nhánh ngay tại booking: tick + điền info hợp lệ → Hotel Service lưu theo booking; không tick → raise CS tạo request (csTicketId). Downstream ERP/AF/tracking giống luồng chung. <code>-&gt;&gt;</code> sync · <code>--&gt;&gt;</code> return · <code>-)</code> async · thanh dọc = activation.</div>
     <div class="diagram"><pre class="mermaid">
 sequenceDiagram
     actor User as Khách hàng
@@ -304,7 +346,6 @@ sequenceDiagram
   <!-- 04 -->
   <section>
     <div class="sec-head"><span class="sec-num">04</span><h2>Sequence — điều chỉnh / huỷ</h2></div>
-    <div class="sec-desc">Cùng convention như trên: <code>-&gt;&gt;</code> sync · <code>--&gt;&gt;</code> return · <code>-)</code> async (email / push). Fragment <code>alt/else</code> rẽ theo trạng thái tracking; fragment lồng cho Partial / Full.</div>
     <div class="diagram"><pre class="mermaid">
 sequenceDiagram
     actor User as Khách hàng
@@ -370,7 +411,6 @@ sequenceDiagram
   <!-- 05 -->
   <section>
     <div class="sec-head"><span class="sec-num">05</span><h2>Activity — tạo hóa đơn</h2></div>
-    <div class="sec-desc">Lane theo actor: Khách hàng · CS · CRM · Hotel · Platform · ERP · VACOM · AF. <b>2 cách</b>: <b>[Cách A – tick]</b> điền info tại Hotel Service (màn Pax Info); <b>[Cách B – CS]</b> user <b>liên hệ CS</b> → CS tạo ticket → CRM tạo request. Platform <b>validate</b> (gồm chống trùng) → <b>Hợp lệ?</b> → tracking → cron → VACOM → <b>fork song song</b> (Success+push ∥ email) → join. <b>Sync trạng thái lên CRM</b> ở mỗi mốc.</div>
     <div class="diagram">
     <svg viewBox="0 0 1592 2634" width="100%" style="max-width:1592px;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif">
 <defs><marker id="af" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#5C5566"/></marker></defs>
@@ -536,7 +576,6 @@ sequenceDiagram
   <!-- 06 -->
   <section>
     <div class="sec-head"><span class="sec-num">06</span><h2>Activity — huỷ</h2></div>
-    <div class="sec-desc">Chia <b>swimlane</b> theo actor. Cùng notation: <b>●</b> initial · <b>◎</b> final (nhiều final cho các nhánh) · <b>◇</b> decision/merge · thanh đen fork/join · guard <code>[...]</code>. Nhánh Success: sau ERP xuất HĐ thay thế, fork gửi mail (AF) song song response về Platform, join rồi push noti.</div>
     <div class="diagram">
 <svg viewBox="0 0 1396 2798" width="100%" style="max-width:1396px;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif">
 <defs><marker id="af" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#5C5566"/></marker></defs>
@@ -693,7 +732,6 @@ sequenceDiagram
   <!-- 07 -->
   <section>
     <div class="sec-head"><span class="sec-num">07</span><h2>BPMN (dạng lane)</h2></div>
-    <div class="sec-desc">Tại màn <b>Pax Info</b>: <code>[Có tick]</code> → Hotel Service điền + lưu; <code>[Không tick]</code> → <b>user liên hệ CS</b> → CS tạo ticket → CRM. Platform <b>validate</b> (gồm chống trùng) → gateway <code>Hợp lệ?</code> → tracking → cron/VACOM → fork song song (email ∥ Success+push) → join. Kèm luồng <b>huỷ / điều chỉnh</b>. Mọi status <b>sync lên CRM</b>.</div>
     <div class="diagram"><pre class="mermaid">
 flowchart TD
     subgraph L1["Lane: Khách hàng"]
@@ -765,6 +803,21 @@ flowchart TD
     </pre></div>
   </section>
 
+  <!-- 08 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">08</span><h2>Tài liệu</h2></div>
+    <ul class="doclist">
+      <li>
+        <div class="doc-name">Xuất HĐ hiện có</div>
+        <a href="https://atlassiantool.mservice.com.vn:9443/display/BOOK/VAT+ISSUING" target="_blank" rel="noopener">https://atlassiantool.mservice.com.vn:9443/display/BOOK/VAT+ISSUING</a>
+      </li>
+      <li>
+        <div class="doc-name">BRD OMH</div>
+        <a href="https://docs.google.com/document/d/1XvvE8t_yCM-wFIn7qprT_jSyYQINvARGoakfUnvBnVI/edit?tab=t.0" target="_blank" rel="noopener">https://docs.google.com/document/d/1XvvE8t_yCM-wFIn7qprT_jSyYQINvARGoakfUnvBnVI/edit?tab=t.0</a>
+      </li>
+    </ul>
+  </section>
+
 </div>
 
 <script>
@@ -790,7 +843,7 @@ flowchart TD
       edgeLabelBackground: '#FBFAF7'
     },
     flowchart: { htmlLabels: true },
-    sequence: { actorMargin: 40, mirrorActors: false }
+    sequence: { actorMargin: 40, mirrorActors: true }
   });
 </script>
 </body>
