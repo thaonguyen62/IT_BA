@@ -737,7 +737,6 @@ sequenceDiagram
   <!-- 07 -->
   <section>
     <div class="sec-head"><span class="sec-num">07</span><h2>BPMN — tạo hóa đơn</h2></div>
-    <p class="sec-desc">BPMN chuẩn: mỗi hệ thống là một <b>pool</b> riêng; 2 luồng vào — user tick tại Pax Info (qua Hotel Service/Partner) hoặc <b>liên hệ CS → CRM tạo request (csTicketId)</b>; trao đổi giữa các pool đi bằng <b>message flow</b> (nét đứt); trong một pool là <b>sequence flow</b> (nét liền). Timeout của callback thể hiện bằng <b>timer event</b>. Toàn bộ hình nằm gọn trong khung — <b>click vào hình để phóng to 100%</b>, click lần nữa / Esc để đóng.</p>
     <div class="diagram zoomable" title="Click để phóng to">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2360 1650" width="100%" style="height:auto;display:block;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif">
 <defs>
@@ -1034,7 +1033,6 @@ sequenceDiagram
   <!-- 07b -->
   <section>
     <div class="sec-head"><span class="sec-num">07b</span><h2>BPMN — huỷ / điều chỉnh</h2></div>
-    <p class="sec-desc"><b>Mỗi lần huỷ = 1 HĐ điều chỉnh riêng, đi FULL luồng phát hành</b> (build → gửi ERP → 202 Pending → cron batch → VACOM → callback) — không mark cancel ở Init/Pending. Chỉ rẽ Partial / Full khi build; ERP callback kết quả về Platform qua message flow; mọi thay đổi trạng thái <b>sync về CRM</b> (pool CRM). <b>Click vào hình để phóng to 100%</b>, click lần nữa / Esc để đóng.</p>
     <div class="diagram zoomable" title="Click để phóng to">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 1640" width="100%" style="height:auto;display:block;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif">
 <defs>
